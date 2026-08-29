@@ -9,7 +9,9 @@ function createDbClient() {
     const token = process.env.DATABASE_AUTH_TOKEN;
     const client = createClient({ url, authToken: token });
     const adapter = new PrismaLibSQL(client);
-    return new PrismaClient({ adapter });
+    // datasourceUrl file: hanya untuk memuaskan validasi protokol Prisma;
+    // koneksi asli sepenuhnya lewat adapter libSQL (Turso)
+    return new PrismaClient({ adapter, datasourceUrl: "file:./dev.db" });
   }
   // Local development: gunakan sqlite langsung
   return new PrismaClient({
