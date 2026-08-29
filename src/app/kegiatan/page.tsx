@@ -32,7 +32,7 @@ export default async function KegiatanPage() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {activities.map(a => (
               <Link key={a.id} href={`/mitra/${a.partner.slug}`} className="group rounded-2xl border border-stone-100 bg-white p-5 shadow-sm transition-all hover:border-emerald-200 hover:shadow-md">
-                <div className="mb-4 h-32 overflow-hidden rounded-xl bg-stone-100"><img src={a.photoUrl || "/logo-unej.png"} alt={`Foto kegiatan ${a.title}`} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" /></div>
+                <div className={`mb-4 flex h-32 items-center justify-center overflow-hidden rounded-xl ${a.photoUrl ? "bg-stone-100" : "bg-white"}`}><img src={a.photoUrl || "/logo-unej.png"} alt={`Foto kegiatan ${a.title}`} className={`h-full w-full transition-transform duration-300 group-hover:scale-105 ${a.photoUrl ? "object-cover" : "object-contain p-3"}`} /></div>
                 <div className="flex items-start justify-between gap-2"><h2 className="font-semibold leading-snug text-stone-900 group-hover:text-emerald-700">{a.title}</h2><ArrowRight className="mt-1 h-4 w-4 shrink-0 text-stone-300 group-hover:text-emerald-600" /></div>
                 {a.description && <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-stone-500">{a.description}</p>}
                 <p className="mt-3 flex items-center gap-1.5 text-xs font-medium text-emerald-700"><Building2 className="h-3.5 w-3.5" /> {a.partner.name}</p>

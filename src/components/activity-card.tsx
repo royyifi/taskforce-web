@@ -19,12 +19,12 @@ export default function ActivityCard({ activity }: { activity: ActivityLite }) {
       href={`/kegiatan`}
       className="group block overflow-hidden rounded-2xl border border-stone-100 bg-white shadow-sm transition-all hover:shadow-md hover:border-emerald-200"
     >
-      <div className="h-40 w-full overflow-hidden bg-stone-100">
+      <div className={`flex h-40 w-full items-center justify-center overflow-hidden ${activity.photoUrl ? "bg-stone-100" : "bg-white"}`}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={activity.photoUrl || "/logo-unej.png"}
           alt={`Foto kegiatan ${activity.title}`}
-          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          className={`h-full w-full transition-transform duration-300 group-hover:scale-105 ${activity.photoUrl ? "object-cover" : "object-contain p-3"}`}
         />
       </div>
       <div className="p-5">
