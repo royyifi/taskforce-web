@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { createClient } from "@libsql/client";
-import { PrismaLibSql } from "@prisma/adapter-libsql";;
+import { PrismaLibSQL } from "@prisma/adapter-libsql";
 
 function createDbClient() {
   const url = process.env.DATABASE_URL;
