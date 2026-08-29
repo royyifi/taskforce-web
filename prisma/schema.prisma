@@ -1,0 +1,225 @@
+// Prisma schema for Taskforce Kerja Sama THP UNEJ
+// SQLite untuk local dev; untuk production ganti provider ke postgresql
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== ENUMS (SQLite: pakai string) ====================
+// partner_level:      LOKAL | NASIONAL | INTERNASIONAL
+// partner_category:   PERGURUAN_TINGGI | INDUSTRI | PEMERINTAH | BUMN | BUMD | SEKOLAH | NGO | UMKM | SWASTA | KOMUNITAS | LAINNYA
+// agreement_type:     MOU | PKS | IA | MOA | LAINNYA
+// agreement_status:   AKTIF | AKAN_BERAKHIR | BERAKHIR
+// activity_type:      PENELITIAN | PENGABDIAN | MAGANG | KKN | PKL | PERTUKARAN | PEMBELAJARAN | SEMINAR | REKRUTMEN | LAINNYA
+// activity_status:    PENDING | APPROVED | REJECTED | REVISION_REQUESTED
+// user_role:          SUPER_ADMIN | TEAM_ADMIN | CONTRIBUTOR
+
+model Partner {
+  id               String   @id @default(cuid())
+  slug             String   @unique
+  name             String
+  level            String   // LOKAL | NASIONAL | INTERNASIONAL
+  category         String?  // kategori mitra
+  country          String?
+  city             String?
+  address          String?
+  phone            String?
+  email            String?
+  website          String?
+  description      String?
+  picName          String?
+  picPosition      String?
+  picPhone         String?
+  picEmail         String?
+  // Sumber data
+  source           String?  // SISTER | Excel | Usulan, dll
+  internalNote     String?  // catatan internal, tidak publik
+  usedByProdi      String?  // prodi yang pernah menggunakan mitra
+  // Status workflow
+  status           String   @default("APPROVED") // PENDING | APPROVED | REJECTED
+  verifiedById     String?
+  verifiedAt       DateTime?
+  verifiedBy       User?    @relation("PartnerVerifier", fields: [verifiedById], references: [id])
+  // Metadata
+  createdById      String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  agreements       Agreement[]
+  activities       Activity[]
+  cooperationFields PartnerField[]
+  editProposals    PartnerEditProposal[]
+
+  @@index([level])
+  @@index([status])
+  @@index([name])
+}
+
+model PartnerEditProposal {
+  id            String    @id @default(cuid())
+  partnerId     String
+  partner       Partner   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  // data koreksi yang diusulkan (null = tidak diubah)
+  name          String?
+  level         String?
+  category      String?
+  address       String?
+  phone         String?
+  email         String?
+  website       String?
+  picName       String?
+  picPosition   String?
+  picPhone      String?
+  picEmail      String?
+  city          String?
+  country       String?
+  description   String?
+  // pelapor
+  submitterName  String
+  submitterEmail String? // opsional
+  submitterUnit  String?
+  note           String?
+  status        String    @default("PENDING") // PENDING | APPROVED | REJECTED
+  reviewNote    String?
+  reviewedAt    DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@index([partnerId])
+  @@index([status])
+}
+
+model Agreement {
+  id              String    @id @default(cuid())
+  partnerId       String
+  partner         Partner   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  type            String    // MOU | PKS | IA | MOA | LAINNYA
+  number          String?
+  startDate       DateTime?
+  endDate         DateTime?
+  documentUrl     String?
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([partnerId])
+  @@index([endDate])
+}
+
+model CooperationField {
+  id       String @id @default(cuid())
+  code     String @unique // MG, AM, RS, PI, PK, KW, KKN
+  name     String // Magang, Agribisnis Muda, dst
+
+  partners PartnerField[]
+}
+
+model PartnerField {
+  partnerId           String
+  partner             Partner          @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  cooperationFieldId  String
+  cooperationField    CooperationField @relation(fields: [cooperationFieldId], references: [id], onDelete: Cascade)
+
+  @@id([partnerId, cooperationFieldId])
+}
+
+model Activity {
+  id             String    @id @default(cuid())
+  partnerId      String
+  partner        Partner   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  title          String
+  type           String    // PENELITIAN | PENGABDIAN | MAGANG | ...
+  dateStart      DateTime?
+  dateEnd        DateTime?
+  location       String?
+  description    String?
+  output         String?
+  internalPic    String?
+  partnerPic     String?
+  unit           String?   // unit/prodi
+  participants   Int?
+  photoUrl       String?
+  driveUrl       String?
+  publicationUrl String?
+  status         String    @default("APPROVED") // PENDING | APPROVED | REJECTED | REVISION_REQUESTED
+  submittedBy    String?   // nama pengusul
+  submittedEmail String?
+  reviewedById   String?
+  reviewedAt     DateTime?
+  reviewNote     String?
+  reviewedBy     User?    @relation("ActivityReviewer", fields: [reviewedById], references: [id])
+  lecturers      ActivityLecturer[]
+  students       ActivityStudent[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([partnerId])
+  @@index([status])
+  @@index([dateStart])
+}
+
+// Dosen pelaksana kegiatan (satu bisa ditandai ketua pelaksana)
+model ActivityLecturer {
+  id         String   @id @default(cuid())
+  activityId String
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  name       String
+  isLeader   Boolean  @default(false) // ketua pelaksana
+  order      Int      @default(0)
+
+  @@index([activityId])
+}
+
+// Mahasiswa yang terlibat kegiatan
+model ActivityStudent {
+  id         String   @id @default(cuid())
+  activityId String
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  name       String
+  order      Int      @default(0)
+
+  @@index([activityId])
+}
+
+model TeamMember {
+  id        String   @id @default(cuid())
+  name      String // nama lengkap beserta gelar
+  isKetua   Boolean  @default(false) // Ketua Tim Kerja Sama Prodi
+  phone     String?
+  email     String?
+  photoUrl  String?
+  order     Int      @default(0) // urutan tampil
+  createdAt DateTime @default(now())
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  passwordHash  String
+  role          String   @default("CONTRIBUTOR") // SUPER_ADMIN | TEAM_ADMIN | CONTRIBUTOR
+  unit          String?
+  status        String   @default("ACTIVE")
+  createdAt     DateTime @default(now())
+
+  activitiesVerified Activity[] @relation("ActivityReviewer")
+  partnersVerified   Partner[]  @relation("PartnerVerifier")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  userName   String?
+  action     String   // CREATE | UPDATE | DELETE | APPROVE | REJECT | MERGE | IMPORT
+  entityType String   // Partner | Agreement | Activity | User
+  entityId   String?
+  entityName String?
+  detail     String?  // deskripsi perubahan (JSON atau teks)
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+}
