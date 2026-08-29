@@ -30,8 +30,19 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# local database and imported source data
+/prisma/dev.db
+/prisma/imported-data.json
+
+# local uploaded files
+/public/uploads/
+
+# local migration helper scripts
+/scripts/
+
+# environment files (never commit secrets)
 .env*
+!.env.example
 
 # vercel
 .vercel
