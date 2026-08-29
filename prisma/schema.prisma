@@ -8,7 +8,9 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
+  // URL koneksi production diberikan oleh adapter Turso di src/lib/db.ts.
+  // Nilai file ini hanya untuk validasi datasource Prisma saat build/runtime.
+  url      = "file:./dev.db"
 }
 
 // ==================== ENUMS (SQLite: pakai string) ====================
