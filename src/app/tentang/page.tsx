@@ -9,45 +9,17 @@ function initials(name: string) {
   const clean = name.replace(/^(?:Prof\.|Drs\.|Dr\.|Ir\.|H\.|Hj\.)\s+/i, "").replace(/(?:,\s*[A-Za-z.]+)+\s*$/, "").trim();
   return clean.split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase() || "").join("");
 }
-
 function MemberCard({ member }: { member: TeamMember }) {
   const { name, isKetua, phone, email, photoUrl } = member;
-  return (
-    <div className={`rounded-2xl border bg-white p-6 shadow-sm ${isKetua ? "border-emerald-200 ring-1 ring-emerald-100" : "border-stone-100"}`}>
-      <div className="flex items-center gap-4">
-        {photoUrl
-          ? <><img src={photoUrl} alt={name} onError={(event) => { event.currentTarget.hidden = true; event.currentTarget.nextElementSibling?.removeAttribute("hidden"); }} className="h-14 w-14 shrink-0 rounded-2xl object-cover" /><span hidden className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-lg font-bold ${isKetua ? "bg-emerald-600 text-white" : "bg-emerald-50 text-emerald-700"}`}>{initials(name)}</span></>
-          : <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-lg font-bold ${isKetua ? "bg-emerald-600 text-white" : "bg-emerald-50 text-emerald-700"}`}>{initials(name)}</span>}
-        <div className="min-w-0">
-          {isKetua && <span className="mb-1 inline-block rounded-full bg-emerald-600 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">Ketua Tim</span>}
-          <h3 className="font-bold leading-snug text-stone-900">{name}</h3>
-          <p className="mt-0.5 text-xs font-medium text-emerald-700">{isKetua ? "Ketua Tim Kerja Sama Prodi" : "Anggota Tim Kerja Sama Prodi"}</p>
-        </div>
-      </div>
-      {(phone || email) && <div className="mt-4 space-y-2 border-t border-stone-100 pt-4 text-sm">
-        {phone && <a href={`tel:${phone.replace(/[^+\d]/g, "")}`} className="flex items-center gap-2 text-stone-600 hover:text-emerald-700"><Phone className="h-3.5 w-3.5 shrink-0 text-stone-400" />{phone}</a>}
-        {email && <a href={`mailto:${email}`} className="flex items-center gap-2 break-all text-stone-600 hover:text-emerald-700"><Mail className="h-4 w-4 shrink-0 text-stone-400" />{email}</a>}
-      </div>}
+  return <div className={`rounded-2xl border bg-white p-6 shadow-sm ${isKetua ? "border-emerald-200 ring-1 ring-emerald-100" : "border-stone-100"}`}>
+    <div className="flex items-center gap-4">
+      <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-emerald-50 text-lg font-bold text-emerald-700">{photoUrl ? <img src={photoUrl} alt="" className="h-full w-full object-cover" /> : initials(name)}</div>
+      <div className="min-w-0">{isKetua && <span className="mb-1 inline-block rounded-full bg-emerald-600 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">Ketua Tim</span>}<h3 className="font-bold leading-snug text-stone-900">{name}</h3><p className="mt-0.5 text-xs font-medium text-emerald-700">{isKetua ? "Ketua Tim Kerja Sama Prodi" : "Anggota Tim Kerja Sama Prodi"}</p></div>
     </div>
-  );
+    {(phone || email) && <div className="mt-4 space-y-2 border-t border-stone-100 pt-4 text-sm">{phone && <a href={`tel:${phone.replace(/[^+\d]/g, "")}`} className="flex items-center gap-2 text-stone-600 hover:text-emerald-700"><Phone className="h-3.5 w-3.5 shrink-0 text-stone-400" />{phone}</a>}{email && <a href={`mailto:${email}`} className="flex items-center gap-2 break-all text-stone-600 hover:text-emerald-700"><Mail className="h-4 w-4 shrink-0 text-stone-400" />{email}</a>}</div>}
+  </div>;
 }
-
 export default async function TentangPage() {
   const team = await db.teamMember.findMany({ orderBy: [{ isKetua: "desc" }, { order: "asc" }, { createdAt: "asc" }] });
-  const anggota = team.filter(m => !m.isKetua);
-  return <div className="bg-stone-50"><section className="bg-white"><div className="mx-auto max-w-4xl px-4 py-16 text-center sm:py-24"><p className="text-xs font-semibold uppercase tracking-wider text-emerald-700">Tentang portal</p><h1 className="mt-3 text-3xl font-bold tracking-tight text-stone-900 sm:text-5xl">Membangun Kemitraan,<br /><span className="text-emerald-700">Menguatkan Kolaborasi, Menciptakan Dampak.</span></h1><p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-stone-500">Portal Pemetaan dan Dokumentasi Kerja Sama merupakan pusat data terintegrasi untuk memetakan mitra, mendokumentasikan kegiatan, dan mengukur pemanfaatan kerja sama Teknologi Hasil Pertanian.</p></div></section><div className="mx-auto max-w-5xl px-4 py-14 sm:py-20"><section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{[[Target,"Memetakan Mitra","Mengetahui siapa saja mitra yang dimiliki dan potensi kolaborasinya."],[Database,"Satu Sumber Data","Seluruh data kerja sama tersimpan terpusat, rapi, dan mudah ditemukan."],[FileCheck2,"Berbasis Bukti","Setiap kegiatan didukung dokumentasi untuk laporan dan akreditasi."],[Users,"Kolaboratif","Dosen dan mahasiswa dapat berkontribusi memperkaya database."],[ShieldCheck,"Terverifikasi","Data yang tampil ke publik telah melalui proses verifikasi admin."],[ArrowRight,"Mengukur Dampak","Melihat mitra yang aktif digunakan dan menentukan langkah berikutnya."]].map(([Icon,title,desc]) => { const I=Icon as typeof Target; return <div key={title as string} className="rounded-2xl border border-stone-100 bg-white p-6 shadow-sm"><I className="h-7 w-7 text-emerald-600" /><h2 className="mt-4 font-bold text-stone-900">{title as string}</h2><p className="mt-2 text-sm leading-relaxed text-stone-500">{desc as string}</p></div>})}</section>
-
-      <section className="mt-16">
-        <div className="text-center">
-          <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700">Struktur tim</p>
-          <h2 className="mt-2 text-2xl font-bold text-stone-900 sm:text-3xl">Tim Kerja Sama</h2>
-          <p className="mt-2 text-sm text-stone-500">Program Studi Teknologi Hasil Pertanian · Fakultas Teknologi Pertanian · Universitas Jember</p>
-        </div>
-        {team.length === 0 ? <p className="mt-8 rounded-2xl border border-dashed border-stone-200 bg-white p-8 text-center text-sm text-stone-400">Data tim akan segera hadir.</p> : <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {team.map(m => <MemberCard key={m.id} member={m} />)}
-        </div>}
-      </section>
-
-      <section className="mt-14 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-6 sm:p-10"><h2 className="text-2xl font-bold text-stone-900">Tim Kerja Sama</h2><p className="mt-2 text-stone-600">Fakultas Teknologi Pertanian</p><p className="text-stone-600">Universitas Jember</p><Link href="/mitra" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-emerald-700">Jelajahi data mitra <ArrowRight className="h-4 w-4" /></Link></section>
-    </div></div>;
+  return <div className="bg-stone-50"><section className="bg-white"><div className="mx-auto max-w-4xl px-4 py-16 text-center sm:py-24"><p className="text-xs font-semibold uppercase tracking-wider text-emerald-700">Tentang portal</p><h1 className="mt-3 text-3xl font-bold tracking-tight text-stone-900 sm:text-5xl">Membangun Kemitraan,<br /><span className="text-emerald-700">Menguatkan Kolaborasi, Menciptakan Dampak.</span></h1><p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-stone-500">Portal Pemetaan dan Dokumentasi Kerja Sama merupakan pusat data terintegrasi untuk memetakan mitra, mendokumentasikan kegiatan, dan mengukur pemanfaatan kerja sama Teknologi Hasil Pertanian.</p></div></section><div className="mx-auto max-w-5xl px-4 py-14 sm:py-20"><section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{[[Target,"Memetakan Mitra","Mengetahui siapa saja mitra yang dimiliki dan potensi kolaborasinya."],[Database,"Satu Sumber Data","Seluruh data kerja sama tersimpan terpusat, rapi, dan mudah ditemukan."],[FileCheck2,"Berbasis Bukti","Setiap kegiatan didukung dokumentasi untuk laporan dan akreditasi."],[Users,"Kolaboratif","Dosen dan mahasiswa dapat berkontribusi memperkaya database."],[ShieldCheck,"Terverifikasi","Data yang tampil ke publik telah melalui proses verifikasi admin."],[ArrowRight,"Mengukur Dampak","Melihat mitra yang aktif digunakan dan menentukan langkah berikutnya."]].map(([Icon,title,desc]) => { const I=Icon as typeof Target; return <div key={title as string} className="rounded-2xl border border-stone-100 bg-white p-6 shadow-sm"><I className="h-7 w-7 text-emerald-600" /><h2 className="mt-4 font-bold text-stone-900">{title as string}</h2><p className="mt-2 text-sm leading-relaxed text-stone-500">{desc as string}</p></div>})}</section><section className="mt-16"><div className="text-center"><p className="text-xs font-semibold uppercase tracking-wider text-emerald-700">Struktur tim</p><h2 className="mt-2 text-2xl font-bold text-stone-900 sm:text-3xl">Tim Kerja Sama</h2><p className="mt-2 text-sm text-stone-500">Program Studi Teknologi Hasil Pertanian · Fakultas Teknologi Pertanian · Universitas Jember</p></div>{team.length === 0 ? <p className="mt-8 rounded-2xl border border-dashed border-stone-200 bg-white p-8 text-center text-sm text-stone-400">Data tim akan segera hadir.</p> : <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{team.map(m => <MemberCard key={m.id} member={m} />)}</div>}</section><section className="mt-14 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-6 sm:p-10"><h2 className="text-2xl font-bold text-stone-900">Tim Kerja Sama</h2><p className="mt-2 text-stone-600">Fakultas Teknologi Pertanian</p><p className="text-stone-600">Universitas Jember</p><Link href="/mitra" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-emerald-700">Jelajahi data mitra <ArrowRight className="h-4 w-4" /></Link></section></div></div>;
 }
