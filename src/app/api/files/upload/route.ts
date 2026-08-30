@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { requireAdmin } from "@/lib/auth";
 
 const MAX_SIZE = 5 * 1024 * 1024;
 const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -11,18 +12,20 @@ function validSignature(type: string, bytes: Uint8Array) {
 }
 
 export async function POST(request: Request) {
+  const session = await requireAdmin();
+  if (!session) return NextResponse.json({ error: "Hanya admin yang dapat mengunggah foto." }, { status: 401 });
   try {
     const form = await request.formData();
     const file = form.get("file");
-    if (!(file instanceof File)) return NextResponse.json({ error: "Foto sampul wajib dipilih." }, { status: 400 });
-    if (!ALLOWED.has(file.type)) return NextResponse.json({ error: "Format foto harus JPG, PNG, atau WEBP." }, { status: 400 });
+    if (!(file instanceof File)) return NextResponse.json({ error: "File foto wajib dipilih." }, { status: 400 });
+    if (!ALLOWED.has(file.type)) return NextResponse.json({ error: "Format harus JPG, PNG, atau WEBP." }, { status: 400 });
     const data = Buffer.from(await file.arrayBuffer());
     if (data.length > MAX_SIZE) return NextResponse.json({ error: "Ukuran foto maksimal 5 MB." }, { status: 400 });
     if (!validSignature(file.type, data)) return NextResponse.json({ error: "File bukan gambar yang valid." }, { status: 400 });
     const stored = await db.storedFile.create({ data: { mimeType: file.type, size: data.length, data } });
     return NextResponse.json({ ok: true, url: `/api/files/${stored.id}` });
   } catch (error) {
-    console.error("activity upload error:", error);
+    console.error("file upload error:", error);
     return NextResponse.json({ error: "Upload foto gagal." }, { status: 500 });
   }
 }
