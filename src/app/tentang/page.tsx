@@ -16,7 +16,7 @@ function MemberCard({ member }: { member: TeamMember }) {
     <div className={`rounded-2xl border bg-white p-6 shadow-sm ${isKetua ? "border-emerald-200 ring-1 ring-emerald-100" : "border-stone-100"}`}>
       <div className="flex items-center gap-4">
         {photoUrl
-          ? <img src={photoUrl} alt={name} className="h-14 w-14 shrink-0 rounded-2xl object-cover" />
+          ? <><img src={photoUrl} alt={name} onError={(event) => { event.currentTarget.hidden = true; event.currentTarget.nextElementSibling?.removeAttribute("hidden"); }} className="h-14 w-14 shrink-0 rounded-2xl object-cover" /><span hidden className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-lg font-bold ${isKetua ? "bg-emerald-600 text-white" : "bg-emerald-50 text-emerald-700"}`}>{initials(name)}</span></>
           : <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-lg font-bold ${isKetua ? "bg-emerald-600 text-white" : "bg-emerald-50 text-emerald-700"}`}>{initials(name)}</span>}
         <div className="min-w-0">
           {isKetua && <span className="mb-1 inline-block rounded-full bg-emerald-600 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">Ketua Tim</span>}
