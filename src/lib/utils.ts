@@ -114,12 +114,11 @@ export function formatDateShort(date: Date | null): string {
  */
 export const FIELD_LABELS: Record<string, string> = {
   MG: "Magang",
-  AM: "Agribisnis Muda",
-  RS: "Riset",
-  PI: "Penelitian",
-  PK: "Pengabdian",
-  KW: "Kuliah Kerja",
-  KKN: "KKN",
+  PD: "Pendidikan",
+  PM: "Pengabdian Masyarakat",
+  PN: "Penelitian",
+  PP: "Pertukaran Pelajar",
+  SPI: "Studi/Proyek Independen",
 };
 
 /**

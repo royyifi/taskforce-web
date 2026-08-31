@@ -18,7 +18,7 @@ datasource db {
 // partner_category:   PERGURUAN_TINGGI | INDUSTRI | PEMERINTAH | BUMN | BUMD | SEKOLAH | NGO | UMKM | SWASTA | KOMUNITAS | LAINNYA
 // agreement_type:     MOU | PKS | IA | MOA | LAINNYA
 // agreement_status:   AKTIF | AKAN_BERAKHIR | BERAKHIR
-// activity_type:      PENELITIAN | PENGABDIAN | MAGANG | KKN | PKL | PERTUKARAN | PEMBELAJARAN | SEMINAR | REKRUTMEN | LAINNYA
+// MG = Magang, PD = Pendidikan, PM = Pengabdian Masyarakat, PN = Penelitian, PP = Pertukaran Pelajar, SPI = Studi/Proyek Independen
 // activity_status:    PENDING | APPROVED | REJECTED | REVISION_REQUESTED
 // user_role:          SUPER_ADMIN | TEAM_ADMIN | CONTRIBUTOR
 
@@ -115,8 +115,8 @@ model Agreement {
 
 model CooperationField {
   id   String @id @default(cuid())
-  code String @unique // MG, AM, RS, PI, PK, KW, KKN
-  name String // Magang, Agribisnis Muda, dst
+  code String @unique // MG | PD | PM | PN | PP | SPI
+  name String // Magang | Pendidikan | Pengabdian Masyarakat | Penelitian | Pertukaran Pelajar | Studi/Proyek Independen
 
   partners PartnerField[]
 }

@@ -5,8 +5,8 @@ import importedPartners from "./imported-data.json";
 const prisma = new PrismaClient();
 
 const fields = [
-  ["MG", "Magang"], ["AM", "Agribisnis Muda"], ["RS", "Riset"],
-  ["PI", "Penelitian"], ["PK", "Pengabdian"], ["KW", "Kuliah Kerja"], ["KKN", "KKN"],
+  ["MG", "Magang"], ["PD", "Pendidikan"], ["PM", "Pengabdian Masyarakat"],
+  ["PN", "Penelitian"], ["PP", "Pertukaran Pelajar"], ["SPI", "Studi/Proyek Independen"],
 ] as const;
 
 function date(value: string | null) { return value ? new Date(value) : null; }
