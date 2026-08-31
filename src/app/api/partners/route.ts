@@ -69,10 +69,10 @@ export async function GET(req: Request) {
     let utilizationColor: string;
 
     if (recentActivities.length > 0) {
-      utilizationLabel = "Sudah Digunakan";
+      utilizationLabel = "Sudah ada Implementasi";
       utilizationColor = "green";
     } else if (p.agreements.length > 0) {
-      utilizationLabel = "Belum Digunakan";
+      utilizationLabel = "Belum ada Implementasi";
       utilizationColor = "yellow";
     } else {
       utilizationLabel = "Potensial";

@@ -30,7 +30,7 @@ async function getDashboardData() {
   partners.forEach(p => { if (p.level in counts) counts[p.level as keyof typeof counts]++; });
   const partnerCards: PartnerLite[] = partners.slice(0, 6).map(p => ({
     id: p.id, slug: p.slug, name: p.name, level: p.level, category: p.category,
-    city: p.city, country: p.country, utilizationLabel: usedPartnerIds.has(p.id) ? "Sudah Digunakan" : "Belum Digunakan",
+    city: p.city, country: p.country, utilizationLabel: usedPartnerIds.has(p.id) ? "Sudah ada Implementasi" : "Belum ada Implementasi",
     utilizationColor: usedPartnerIds.has(p.id) ? "green" : "yellow",
     fieldNames: p.cooperationFields.map(f => f.cooperationField.name),
   }));
@@ -78,8 +78,8 @@ export default async function Home() {
       <section className="relative z-10 mx-auto -mt-1 max-w-7xl px-4 pb-14">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <KpiCard label="Total Mitra" value={data.total} icon={Users} />
-          <KpiCard label="Sudah Digunakan (6 bln)" value={data.used} icon={Activity} color="emerald" />
-          <KpiCard label="Belum Digunakan" value={data.total - data.used} icon={Clock3} color="yellow" />
+          <KpiCard label="Sudah ada Implementasi (6 bulan)" value={data.used} icon={Activity} color="emerald" />
+          <KpiCard label="Belum ada Implementasi" value={data.total - data.used} icon={Clock3} color="yellow" />
           <KpiCard label="Kegiatan Terdokumentasi" value={data.activities} icon={FileText} color="blue" />
         </div>
       </section>
@@ -89,14 +89,14 @@ export default async function Home() {
         <section className="grid gap-6 lg:grid-cols-5">
           <div className="rounded-2xl border border-stone-100 bg-white p-6 shadow-sm lg:col-span-2">
             <div className="mb-5 flex items-start justify-between">
-              <div><p className="text-xs font-semibold uppercase tracking-wider text-emerald-700">Ringkasan</p><h2 className="mt-1 text-xl font-bold text-stone-900">Pemanfaatan Mitra</h2></div>
+              <div><p className="text-xs font-semibold uppercase tracking-wider text-emerald-700">Ringkasan</p><h2 className="mt-1 text-xl font-bold text-stone-900">Implementasi Mitra</h2></div>
               <Activity className="h-5 w-5 text-emerald-600" />
             </div>
             <div className="space-y-4">
-              <div><div className="mb-1.5 flex justify-between text-sm"><span className="text-stone-600">Sudah digunakan</span><span className="font-bold text-emerald-700">{data.used}</span></div><div className="h-2 rounded-full bg-stone-100"><div className="h-2 rounded-full bg-emerald-500" style={{ width: `${data.total ? (data.used/data.total)*100 : 0}%` }} /></div></div>
-              <div><div className="mb-1.5 flex justify-between text-sm"><span className="text-stone-600">Belum digunakan</span><span className="font-bold text-amber-700">{data.total - data.used}</span></div><div className="h-2 rounded-full bg-stone-100"><div className="h-2 rounded-full bg-amber-400" style={{ width: `${data.total ? ((data.total-data.used)/data.total)*100 : 0}%` }} /></div></div>
+              <div><div className="mb-1.5 flex justify-between text-sm"><span className="text-stone-600">Sudah ada Implementasi</span><span className="font-bold text-emerald-700">{data.used}</span></div><div className="h-2 rounded-full bg-stone-100"><div className="h-2 rounded-full bg-emerald-500" style={{ width: `${data.total ? (data.used/data.total)*100 : 0}%` }} /></div></div>
+              <div><div className="mb-1.5 flex justify-between text-sm"><span className="text-stone-600">Belum ada Implementasi</span><span className="font-bold text-amber-700">{data.total - data.used}</span></div><div className="h-2 rounded-full bg-stone-100"><div className="h-2 rounded-full bg-amber-400" style={{ width: `${data.total ? ((data.total-data.used)/data.total)*100 : 0}%` }} /></div></div>
             </div>
-            <Link href="/mitra?status=unused" className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-emerald-700 hover:text-emerald-800">Lihat mitra belum digunakan <ArrowRight className="h-4 w-4" /></Link>
+            <Link href="/mitra?status=unused" className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-emerald-700 hover:text-emerald-800">Lihat mitra belum ada implementasi <ArrowRight className="h-4 w-4" /></Link>
           </div>
           <div className="rounded-2xl border border-stone-100 bg-white p-6 shadow-sm lg:col-span-3">
             <div className="mb-5 flex items-start justify-between"><div><p className="text-xs font-semibold uppercase tracking-wider text-emerald-700">Sebaran</p><h2 className="mt-1 text-xl font-bold text-stone-900">Jelajahi Berdasarkan Level</h2></div><Globe2 className="h-5 w-5 text-stone-400" /></div>

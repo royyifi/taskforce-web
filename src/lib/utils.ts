@@ -44,8 +44,8 @@ export function parsePeriod(period: string | null): {
 
 /**
  * Calculate partner utilization status based on activities
- * 🟢 Sudah Digunakan: activity approved within last 6 months
- * 🟡 Belum Digunakan: has partner record but no activity
+ * 🟢 Sudah ada Implementasi: activity approved within last 6 months
+ * 🟡 Belum ada Implementasi: has partner record but no activity
  * 🔵 Potensial: mapped but no agreement or activity
  * 🔴 Tidak Aktif / Berakhir: agreement expired
  */
@@ -64,11 +64,11 @@ export function getUtilizationStatus(
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
     if (lastActivityDate >= sixMonthsAgo) {
-      return { status: "USED", label: "Sudah Digunakan", color: "green" };
+      return { status: "USED", label: "Sudah ada Implementasi", color: "green" };
     }
   }
   if (hasAgreement) {
-    return { status: "UNUSED", label: "Belum Digunakan", color: "yellow" };
+    return { status: "UNUSED", label: "Belum ada Implementasi", color: "yellow" };
   }
   return { status: "POTENTIAL", label: "Potensial", color: "blue" };
 }
