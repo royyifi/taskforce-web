@@ -6,7 +6,7 @@ import Footer from "@/components/footer";
 export const metadata: Metadata = {
   title: "Taskforce Kerja Sama | Teknologi Hasil Pertanian",
   description: "Portal pemetaan dan dokumentasi kerja sama Teknologi Hasil Pertanian — Universitas Jember",
-  icons: { icon: "/favicon.svg" },
+  icons: { icon: [{ url: "/favicon.svg?v=3", type: "image/svg+xml" }] },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
