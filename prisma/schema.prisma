@@ -140,15 +140,31 @@ model Activity {
   dateEnd        DateTime?
   location       String?
   description    String?
+  goal           String?  // tujuan kegiatan
   output         String?
   internalPic    String?
   partnerPic     String?
+  partnerPICPosition String?
+  partnerPICPhone    String?
+  partnerPICEmail    String?
   unit           String? // unit/prodi
   participants   Int?
   photoUrl       String?
   driveUrl       String?
   publicationUrl String?
+  rkpStatus      String?  // BELUM_ADA | DIAJUKAN | PERLU_PERBAIKAN | DISETUJUI
+  rkpUrl         String?
+  iaNumber       String?
+  iaStatus       String?  // DRAFT | DISETUJUI | DITANDATANGANI
   status         String             @default("APPROVED") // PENDING | APPROVED | REJECTED | REVISION_REQUESTED
+  submitterNim   String?
+  submitterPhone String?
+  submitterUnit  String?
+  dosenName      String?
+  reportDate     DateTime?
+  reportSummary  String?
+  reportOutput   String?
+  reportLink     String?
   submittedBy    String? // nama pengusul
   submittedEmail String?
   reviewedById   String?

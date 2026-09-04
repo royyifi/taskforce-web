@@ -22,7 +22,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { partnerId, title, type, dateStart, dateEnd, location, description, output, internalPic, partnerPic, unit, participants, photoUrl, driveUrl, publicationUrl, submittedBy, submittedEmail } = body;
+  const { partnerId, title, type, dateStart, dateEnd, location, description, goal, output, internalPic, partnerPic, partnerPICPosition, partnerPICPhone, partnerPICEmail, unit, participants, photoUrl, driveUrl, publicationUrl, submittedBy, submittedEmail, submitterNim, submitterPhone, submitterUnit, dosenName, rkpStatus, rkpUrl } = body;
   const lecturers = Array.isArray(body.lecturers)
     ? body.lecturers.map((item: unknown) => typeof item === "string" ? { name: item, isLeader: false } : item)
     : [];
@@ -38,10 +38,13 @@ export async function POST(request: Request) {
   const activity = await db.activity.create({
     data: {
       partnerId, title, type, dateStart: new Date(dateStart), dateEnd: dateEnd ? new Date(dateEnd) : null,
-      location: location || null, description: description || null, output: output || null,
-      internalPic: internalPic || null, partnerPic: partnerPic || null, unit: unit || null,
+      location: location || null, description: description || null, goal: goal || null, output: output || null,
+      internalPic: internalPic || null, partnerPic: partnerPic || null, partnerPICPosition: partnerPICPosition || null,
+      partnerPICPhone: partnerPICPhone || null, partnerPICEmail: partnerPICEmail || null, unit: unit || null,
       participants: participants ? Number(participants) : null, photoUrl: photoUrl || null,
       driveUrl: driveUrl || null, publicationUrl: publicationUrl || null, submittedBy, submittedEmail: submittedEmail || null,
+      submitterNim: submitterNim || null, submitterPhone: submitterPhone || null, submitterUnit: submitterUnit || null,
+      dosenName: dosenName || null, rkpStatus: rkpStatus || "BELUM_ADA", rkpUrl: rkpUrl || null,
       status: "PENDING",
       lecturers: { create: lecturerNames.map((name, order) => ({ name, order, isLeader: Boolean(lecturers.find((item: { name?: unknown; isLeader?: unknown }) => String(item?.name || "").trim() === name)?.isLeader) })) },
       students: { create: studentNames.map((name, order) => ({ name, order })) },

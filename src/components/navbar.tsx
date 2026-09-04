@@ -10,6 +10,7 @@ const nav = [
   { href: "/", label: "Beranda" },
   { href: "/mitra", label: "Mitra" },
   { href: "/kegiatan", label: "Kegiatan" },
+  { href: "/magang", label: "Magang" },
   { href: "/tentang", label: "Tentang" },
 ];
 
