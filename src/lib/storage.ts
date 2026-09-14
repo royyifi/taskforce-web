@@ -1,51 +1,66 @@
-import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { createHash } from "node:crypto";
 import { db } from "@/lib/db";
 
-const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
-const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
-const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY;
-const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME;
-const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL?.replace(/\/$/, "");
+const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
+const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY;
+const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET;
 
-export const r2Enabled = Boolean(R2_ACCOUNT_ID && R2_ACCESS_KEY_ID && R2_SECRET_ACCESS_KEY && R2_BUCKET_NAME && R2_PUBLIC_URL);
+export const cloudinaryEnabled = Boolean(CLOUDINARY_CLOUD_NAME && CLOUDINARY_API_KEY && CLOUDINARY_API_SECRET);
 
-const r2 = r2Enabled
-  ? new S3Client({
-      region: "auto",
-      endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-      credentials: { accessKeyId: R2_ACCESS_KEY_ID!, secretAccessKey: R2_SECRET_ACCESS_KEY! },
-    })
-  : null;
+function cloudinarySignature(params: Record<string, string>) {
+  const serialized = Object.entries(params)
+    .filter(([, value]) => value !== "" && value !== undefined)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, value]) => `${key}=${value}`)
+    .join("&");
+  return createHash("sha1").update(`${serialized}${CLOUDINARY_API_SECRET}`).digest("hex");
+}
 
-function publicUrl(key: string) {
-  return `${R2_PUBLIC_URL}/${key.split("/").map(encodeURIComponent).join("/")}`;
+function cloudinaryUrl(resourceType: "image" | "raw", id: string) {
+  return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload/files/${encodeURIComponent(id)}`;
 }
 
 export async function putStoredFile(params: { id: string; data: Buffer; mimeType: string }) {
-  if (!r2) {
+  if (!cloudinaryEnabled) {
     const stored = await db.storedFile.create({ data: { id: params.id, mimeType: params.mimeType, size: params.data.length, data: params.data } });
     return { id: stored.id, url: `/api/files/${stored.id}` };
   }
 
-  const key = `files/${params.id}`;
-  await r2.send(new PutObjectCommand({ Bucket: R2_BUCKET_NAME!, Key: key, Body: params.data, ContentType: params.mimeType, ContentLength: params.data.length }));
-  return { id: params.id, url: publicUrl(key) };
+  const timestamp = String(Math.floor(Date.now() / 1000));
+  const publicId = `files/${params.id}`;
+  const resourceType = params.mimeType.startsWith("image/") ? "image" : "raw";
+  const signature = cloudinarySignature({ public_id: publicId, timestamp });
+  const form = new FormData();
+  form.append("file", new Blob([new Uint8Array(params.data)], { type: params.mimeType }), params.id);
+  form.append("api_key", CLOUDINARY_API_KEY!);
+  form.append("timestamp", timestamp);
+  form.append("public_id", publicId);
+  form.append("signature", signature);
+
+  const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`, { method: "POST", body: form });
+  if (!response.ok) throw new Error(`Cloudinary upload failed: ${response.status}`);
+  const result = await response.json() as { secure_url: string };
+  return { id: params.id, url: result.secure_url };
 }
 
 export async function getStoredFile(id: string) {
-  if (!r2) return db.storedFile.findUnique({ where: { id } });
+  const legacy = await db.storedFile.findUnique({ where: { id } });
+  if (legacy) return legacy;
+  if (!cloudinaryEnabled) return null;
 
-  try {
-    const response = await r2.send(new GetObjectCommand({ Bucket: R2_BUCKET_NAME!, Key: `files/${id}` }));
-    if (!response.Body) return null;
-    const bytes = Buffer.from(await response.Body.transformToByteArray());
-    return { mimeType: response.ContentType || "application/octet-stream", size: bytes.length, data: bytes };
-  } catch {
-    return db.storedFile.findUnique({ where: { id } });
+  for (const resourceType of ["image", "raw"] as const) {
+    try {
+      const response = await fetch(cloudinaryUrl(resourceType, id));
+      if (!response.ok) continue;
+      const data = Buffer.from(await response.arrayBuffer());
+      return { mimeType: response.headers.get("content-type") || "application/octet-stream", size: data.length, data };
+    } catch {
+      // Try the other Cloudinary resource type before reporting not found.
+    }
   }
+  return null;
 }
 
 export async function deleteStoredFile(id: string) {
-  if (r2) await r2.send(new DeleteObjectCommand({ Bucket: R2_BUCKET_NAME!, Key: `files/${id}` }));
   await db.storedFile.deleteMany({ where: { id } });
 }
