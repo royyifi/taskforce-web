@@ -16,11 +16,9 @@ function validSignature(type: string, bytes: Uint8Array) {
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await requireAdmin();
   if (!session) return NextResponse.json({ error: "Hanya admin yang dapat mengunggah logo mitra." }, { status: 401 });
-
   const { id } = await params;
-  const partner = await db.partner.findUnique({ where: { id }, select: { id: true, name: true, logoFileId: true } });
+  const partner = await db.partner.findUnique({ where: { id }, select: { id: true, name: true } });
   if (!partner) return NextResponse.json({ error: "Mitra tidak ditemukan." }, { status: 404 });
-
   try {
     const form = await request.formData();
     const file = form.get("file");
@@ -29,13 +27,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const data = Buffer.from(await file.arrayBuffer());
     if (data.length > MAX_SIZE) return NextResponse.json({ error: "Ukuran file maksimal 5 MB." }, { status: 400 });
     if (!validSignature(file.type, data)) return NextResponse.json({ error: "File tidak valid." }, { status: 400 });
-
     const fileId = `logo_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
     await putStoredFile({ id: fileId, data, mimeType: file.type });
-
     await db.partner.update({ where: { id }, data: { logoFileId: fileId } });
     await logAudit({ action: "UPDATE", entityType: "Partner", entityId: id, entityName: partner.name, detail: `Logo mitra diperbarui oleh ${session.name}` });
-
     return NextResponse.json({ ok: true, logoFileId: fileId });
   } catch (error) {
     console.error("partner logo upload error:", error);
