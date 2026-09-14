@@ -2,19 +2,26 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, AlertCircle, Send, PencilLine } from "lucide-react";
+import { ArrowLeft, CheckCircle2, AlertCircle, Send, PencilLine, UserPlus } from "lucide-react";
+
+const cooperationFields: [string, string][] = [
+  ["MG", "Magang"], ["PD", "Pendidikan"], ["PM", "Pengabdian Masyarakat"],
+  ["PN", "Penelitian"], ["PP", "Pertukaran Pelajar"], ["SPI", "Studi/Proyek Independen"],
+];
 
 interface PartnerData {
   id: string; name: string; level: string; category: string | null;
   address: string | null; phone: string | null; email: string | null; website: string | null;
   picName: string | null; picPosition: string | null; picPhone: string | null; picEmail: string | null;
-  city: string | null; country: string | null;
+  city: string | null; country: string | null; fieldCodes?: string[];
 }
 
 export default function EditMitraPage({ params }: { params: Promise<{ slug: string }> }) {
   const [partner, setPartner] = useState<PartnerData | null>(null);
   const [form, setForm] = useState<Record<string, string>>({});
   const [initialValues, setInitialValues] = useState<Record<string, string>>({});
+  const [selectedFields, setSelectedFields] = useState<string[]>([]);
+  const [initialFields, setInitialFields] = useState<string[]>([]);
   const [state, setState] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
 
@@ -24,6 +31,9 @@ export default function EditMitraPage({ params }: { params: Promise<{ slug: stri
       if (!p) return;
       const values = { name: p.name || "", level: p.level || "NASIONAL", category: p.category || "", address: p.address || "", phone: p.phone || "", email: p.email || "", website: p.website || "", picName: p.picName || "", picPosition: p.picPosition || "", picPhone: p.picPhone || "", picEmail: p.picEmail || "", city: p.city || "", country: p.country || "" };
       setPartner(p);
+      const currentFields = Array.isArray(p.fieldCodes) ? p.fieldCodes : [];
+      setInitialFields(currentFields);
+      setSelectedFields(currentFields);
       setInitialValues(values);
       setForm({ ...values, submitterName: "", submitterEmail: "", submitterUnit: "", note: "" });
     }));
@@ -32,10 +42,13 @@ export default function EditMitraPage({ params }: { params: Promise<{ slug: stri
   const set = (key: string, value: string) => setForm(prev => ({ ...prev, [key]: value }));
 
   async function submit(e: React.FormEvent) {
-    e.preventDefault(); setState("loading");
+    e.preventDefault();
+    if (selectedFields.length === 0) { setState("error"); setMessage("Pilih minimal satu potensi kerja sama."); return; }
+    setState("loading");
     const { submitterName, submitterEmail, submitterUnit, note, ...data } = form;
     const changes = Object.fromEntries(Object.entries(data).filter(([key, value]) => value.trim() !== (initialValues[key] || "").trim()));
-    const res = await fetch("/api/partner-edits", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ partnerId: partner?.id, submitterName, submitterEmail: submitterEmail || undefined, submitterUnit, note, ...changes }) });
+    const fieldsChanged = selectedFields.slice().sort().join(",") !== initialFields.slice().sort().join(",");
+    const res = await fetch("/api/partner-edits", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ partnerId: partner?.id, submitterName, submitterEmail: submitterEmail || undefined, submitterUnit, note, ...(fieldsChanged ? { proposedFields: selectedFields } : {}), ...changes }) });
     const result = await res.json();
     setMessage(result.message || result.error);
     setState(res.ok ? "success" : "error");
@@ -78,6 +91,18 @@ export default function EditMitraPage({ params }: { params: Promise<{ slug: stri
               <Input label="Jabatan PIC" value={form.picPosition} onChange={v => set("picPosition", v)} />
               <Input label="Telepon PIC" value={form.picPhone} onChange={v => set("picPhone", v)} />
               <Input label="Email PIC" value={form.picEmail} onChange={v => set("picEmail", v)} />
+            </div>
+          </Section>
+
+          <Section title="Potensi Kerja Sama">
+            <p className="mb-3 text-xs text-stone-500">Pilih minimal satu potensi kerja sama yang sesuai dengan mitra ini. * wajib dipilih</p>
+            <div className="flex flex-wrap gap-2">
+              {cooperationFields.map(([code, label]) => {
+                const selected = selectedFields.includes(code);
+                return <button type="button" key={code} onClick={() => setSelectedFields(current => selected ? current.filter(value => value !== code) : [...current, code])} className={`rounded-lg border px-3 py-2 text-sm transition-colors ${selected ? "border-emerald-500 bg-emerald-50 font-semibold text-emerald-700" : "border-stone-200 text-stone-600 hover:border-emerald-300"}`}>
+                  {selected ? "✓ " : ""}{label}
+                </button>;
+              })}
             </div>
           </Section>
 

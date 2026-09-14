@@ -5,7 +5,20 @@ import { logAudit } from "@/lib/audit";
 const VALID_CODES = ["MG", "PD", "PM", "PN", "PP", "SPI"];
 
 export async function GET() {
-  const partners = await db.partner.findMany({ where: { status: "APPROVED" }, select: { id: true, name: true, level: true }, orderBy: { name: "asc" } });
+  const partners = await db.partner.findMany({
+    where: { status: "APPROVED" },
+    select: {
+      id: true,
+      name: true,
+      level: true,
+      slug: true,
+      picName: true,
+      picPosition: true,
+      picPhone: true,
+      picEmail: true,
+    },
+    orderBy: { name: "asc" },
+  });
   return NextResponse.json({ partners });
 }
 
@@ -13,6 +26,7 @@ export async function POST(request: Request) {
   const body = await request.json();
   const { name, level, category, country, city, address, phone, email, website, picName, picPosition, picPhone, picEmail, fields, submitterName, submitterEmail, submitterUnit, reason } = body;
   if (!name || !level || !category || !submitterName) return NextResponse.json({ error: "Nama mitra, level, kategori, dan nama pengusul wajib diisi." }, { status: 400 });
+  if (!Array.isArray(fields) || fields.length === 0) return NextResponse.json({ error: "Pilih minimal satu potensi kerja sama." }, { status: 400 });
   const slug = `${name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}-${Date.now().toString(36)}`;
   const partner = await db.partner.create({ data: { name, slug, level, category, country: country || null, city: city || null, address: address || null, phone: phone || null, email: email || null, website: website || null, picName: picName || null, picPosition: picPosition || null, picPhone: picPhone || null, picEmail: picEmail || null, status: "PENDING", source: "Usulan publik", internalNote: JSON.stringify({ submitterName, submitterEmail, submitterUnit, reason }) } });
 

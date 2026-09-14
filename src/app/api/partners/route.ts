@@ -65,8 +65,8 @@ export async function GET(req: Request) {
       : null;
     const agreementActive = p.agreements.some(a => a.endDate && a.endDate > now);
 
-    let utilizationLabel: string;
-    let utilizationColor: string;
+    let utilizationLabel = "";
+    let utilizationColor = "gray";
 
     if (recentActivities.length > 0) {
       utilizationLabel = "Sudah ada Implementasi";
@@ -74,9 +74,6 @@ export async function GET(req: Request) {
     } else if (p.agreements.length > 0) {
       utilizationLabel = "Belum ada Implementasi";
       utilizationColor = "yellow";
-    } else {
-      utilizationLabel = "Potensial";
-      utilizationColor = "blue";
     }
 
     return {
@@ -87,11 +84,20 @@ export async function GET(req: Request) {
       category: p.category,
       city: p.city,
       country: p.country,
+      phone: p.phone,
+      email: p.email,
+      website: p.website,
+      address: p.address,
       utilizationLabel,
       utilizationColor,
       fieldNames: p.cooperationFields.map(f => f.cooperationField.name),
       totalActivities: p.activities.length,
       lastActivityDate: lastActivity?.dateStart?.toISOString() || null,
+      agreements: p.agreements.map(a => ({
+        number: a.number,
+        startDate: a.startDate?.toISOString() || null,
+        endDate: a.endDate?.toISOString() || null,
+      })),
     };
   });
 

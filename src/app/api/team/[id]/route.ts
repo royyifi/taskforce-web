@@ -5,6 +5,8 @@ import { requireAdmin } from "@/lib/auth";
 import { unlink } from "fs/promises";
 import path from "path";
 
+const TEAMS = new Set(["KERJA_SAMA", "MBKM"]);
+
 async function removePhoto(photoUrl: string | null | undefined) {
   if (!photoUrl || !photoUrl.startsWith("/uploads/team/")) return;
   try { await unlink(path.join(process.cwd(), "public", photoUrl)); } catch { /* file sudah tidak ada */ }
@@ -17,8 +19,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   try {
     const { id } = await params;
     const body = await request.json();
-    const { name, isKetua, phone, email, photoUrl, order } = body;
+    const { name, team, isKetua, phone, email, photoUrl, order } = body;
     if (name !== undefined && !String(name).trim()) return NextResponse.json({ error: "Nama wajib diisi." }, { status: 400 });
+    if (team !== undefined && !TEAMS.has(String(team))) return NextResponse.json({ error: "Tim tidak valid." }, { status: 400 });
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email))) return NextResponse.json({ error: "Format email tidak valid." }, { status: 400 });
 
     // Pastikan hanya ada satu ketua
@@ -30,6 +33,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       where: { id },
       data: {
         ...(name !== undefined && { name: String(name).trim() }),
+        ...(team !== undefined && { team: String(team) }),
         ...(isKetua !== undefined && { isKetua: !!isKetua }),
         ...(phone !== undefined && { phone: phone || null }),
         ...(email !== undefined && { email: email || null }),

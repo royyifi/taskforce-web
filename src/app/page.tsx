@@ -30,13 +30,17 @@ async function getDashboardData() {
   partners.forEach(p => { if (p.level in counts) counts[p.level as keyof typeof counts]++; });
   const partnerCards: PartnerLite[] = partners.slice(0, 6).map(p => ({
     id: p.id, slug: p.slug, name: p.name, level: p.level, category: p.category,
-    city: p.city, country: p.country, utilizationLabel: usedPartnerIds.has(p.id) ? "Sudah ada Implementasi" : "Belum ada Implementasi",
-    utilizationColor: usedPartnerIds.has(p.id) ? "green" : "yellow",
+    city: p.city, country: p.country, address: p.address, phone: p.phone, email: p.email, website: p.website,
+    utilizationLabel: usedPartnerIds.has(p.id) ? "Sudah ada Implementasi" : "",
+    utilizationColor: usedPartnerIds.has(p.id) ? "green" : "gray",
     fieldNames: p.cooperationFields.map(f => f.cooperationField.name),
+    agreements: p.agreements.map(a => ({ number: a.number, startDate: a.startDate?.toISOString() || null, endDate: a.endDate?.toISOString() || null })),
   }));
   const activityCards: ActivityLite[] = activities.map(a => ({
-    id: a.id, title: a.title, type: a.type, dateStart: a.dateStart,
+    id: a.id, activityCode: a.activityCode, title: a.title, type: a.type,
+    dateStart: a.dateStart, dateEnd: a.dateEnd,
     partnerName: a.partner.name, partnerSlug: a.partner.slug, location: a.location, photoUrl: a.photoUrl,
+    submittedBy: a.submittedBy, submitterUnit: a.submitterUnit,
   }));
   return { total: partners.length, counts, used: usedPartnerIds.size, activities: await db.activity.count({ where: { status: "APPROVED" } }), partnerCards, activityCards, fields: fields.map(f => ({ name: f.name, count: f.partners.length })).sort((a,b) => b.count-a.count).slice(0, 5) };
 }
@@ -114,9 +118,9 @@ export default async function Home() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{data.partnerCards.slice(0, 6).map(p => <PartnerCard key={p.id} partner={p} />)}</div>
         </section>
 
-        {/* Activities */}
+        {/* Activities → Pemantauan Kegiatan */}
         <section>
-          <div className="mb-5 flex items-end justify-between"><div><p className="text-xs font-semibold uppercase tracking-wider text-emerald-700">Kolaborasi</p><h2 className="mt-1 text-2xl font-bold text-stone-900">Kegiatan Terbaru</h2></div><Link href="/kegiatan" className="inline-flex items-center gap-1 text-sm font-semibold text-emerald-700">Lihat semua <ArrowRight className="h-4 w-4" /></Link></div>
+          <div className="mb-5 flex items-end justify-between"><div><p className="text-xs font-semibold uppercase tracking-wider text-emerald-700">Pemantauan Kegiatan</p><h2 className="mt-1 text-2xl font-bold text-stone-900">Kegiatan Aktif & Terbaru</h2></div><Link href="/kegiatan" className="inline-flex items-center gap-1 text-sm font-semibold text-emerald-700">Lihat semua <ArrowRight className="h-4 w-4" /></Link></div>
           {data.activityCards.length > 0 ? <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{data.activityCards.map(a => <ActivityCard key={a.id} activity={a} />)}</div> : <div className="rounded-2xl border border-dashed border-stone-200 bg-white px-6 py-12 text-center"><Activity className="mx-auto h-8 w-8 text-stone-300" /><p className="mt-3 font-medium text-stone-600">Belum ada kegiatan terdokumentasi</p><p className="mt-1 text-sm text-stone-400">Jadilah yang pertama melaporkan kegiatan kolaborasi.</p><Link href="/kegiatan" className="mt-5 inline-flex rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white">Laporkan Kegiatan</Link></div>}
         </section>
 

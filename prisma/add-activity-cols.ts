@@ -2,7 +2,7 @@ import { createClient } from "@libsql/client";
 
 const db = createClient({ url: process.env.TURSO_URL!, authToken: process.env.TURSO_TOKEN! });
 
-const cols = ['goal','partnerPICPosition','partnerPICPhone','partnerPICEmail','rkpStatus','rkpUrl','iaNumber','iaStatus','submitterNim','submitterPhone','submitterUnit','dosenName','reportDate','reportSummary','reportOutput','reportLink'];
+const cols = ['activityCode','goal','partnerPICPosition','partnerPICPhone','partnerPICEmail','rkpStatus','rkpUrl','iaNumber','iaStatus','iaUrl','iaConfirmedAt','completedAt','submitterNim','submitterPhone','submitterUnit','dosenName','reportDate','reportSummary','reportOutput','reportLink','iaFirstParty','iaProgramName','iaPartnerName','iaPartnerPicName','iaPartnerPicPosition','iaPartnerAddress','iaPartnerLogoFileId','iaSubmittedAt','iaReviewNote'];
 
 async function main() {
   for (const col of cols) {
