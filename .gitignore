@@ -35,8 +35,10 @@ yarn-error.log*
 /prisma/dev.db-journal
 /prisma/imported-data.json
 
-# local Python scripts (import/fix, not for deployment)
+# local Python/Node scripts (import/fix/sync, not for deployment)
 /prisma/*.py
+/prisma/sync-to-turso.js
+/prisma/fix-turso-schema.py
 /src/app/magang/open.py
 
 # local uploaded files
