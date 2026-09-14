@@ -38,8 +38,8 @@ export async function putStoredFile(params: { id: string; data: Buffer; mimeType
   form.append("signature", signature);
 
   const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`, { method: "POST", body: form });
-  if (!response.ok) throw new Error(`Cloudinary upload failed: ${response.status}`);
-  const result = await response.json() as { secure_url: string };
+  const result = await response.json() as { secure_url?: string; error?: { message?: string } };
+  if (!response.ok || !result.secure_url) throw new Error(result.error?.message || `Cloudinary upload failed: ${response.status}`);
   await db.storedFile.create({ data: { id: params.id, mimeType: params.mimeType, size: params.data.length, data: Buffer.alloc(0) } });
   return { id: params.id, url: result.secure_url };
 }
