@@ -2,7 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Check, Circle, Clock3, FileText, MapPin } from "lucide-react";
 import { db } from "@/lib/db";
+import { getSession } from "@/lib/auth";
 import IaConfirm from "@/components/ia-confirm";
+import ActivityAdminActions from "@/components/activity-admin-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +45,8 @@ export default async function ActivityStatusPage({ params }: { params: Promise<{
   const { id } = await params;
   const activity = await db.activity.findUnique({ where: { id }, select: { id: true, title: true, status: true, iaStatus: true, iaNumber: true, iaUrl: true, iaConfirmedAt: true, iaReviewNote: true, iaLanguage: true, dateStart: true, dateEnd: true, location: true, activityCode: true, reportDate: true, reportSummary: true, reportLink: true, rkpUrl: true, completedAt: true, reviewNote: true, source: true, partner: { select: { name: true, slug: true, city: true, address: true, picName: true, picPosition: true } }, students: { orderBy: { order: "asc" as const } } } });
   if (!activity) notFound();
+  const session = await getSession();
+  const isAdmin = Boolean(session && ["SUPER_ADMIN", "TEAM_ADMIN", "ADMIN"].includes(session.role));
   const current = getStage(activity);
   const currentLabel = current < 0 ? "Ditolak" : stages[Math.max(0, current)]?.[1] || "Pengajuan dikirim";
 
@@ -50,7 +54,7 @@ export default async function ActivityStatusPage({ params }: { params: Promise<{
     <Link href="/magang" className="inline-flex items-center gap-2 text-sm font-medium text-stone-500 hover:text-emerald-700"><ArrowLeft className="h-4 w-4" /> Kembali ke Magang</Link>
     <div className="mt-7 rounded-2xl border border-stone-100 bg-white p-5 shadow-sm sm:p-8">
       <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700">Status kegiatan</p>
-      <div className="mt-2 flex flex-wrap items-start justify-between gap-3"><div><h1 className="text-2xl font-bold text-stone-900">{activity.title}</h1><p className="mt-1 text-sm text-stone-500">Nomor Kegiatan: <strong className="text-emerald-700">{activity.activityCode || "Menunggu nomor"}</strong></p></div><span className={`rounded-full px-3 py-1 text-xs font-semibold ${current < 0 ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700"}`}>{current < 0 ? "Ditolak" : currentLabel}</span></div>
+      <div className="mt-2 flex flex-wrap items-start justify-between gap-3"><div><h1 className="text-2xl font-bold text-stone-900">{activity.title}</h1><p className="mt-1 text-sm text-stone-500">Nomor Kegiatan: <strong className="text-emerald-700">{activity.activityCode || "Menunggu nomor"}</strong></p></div><div className="flex flex-col items-end gap-2"><span className={`rounded-full px-3 py-1 text-xs font-semibold ${current < 0 ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700"}`}>{current < 0 ? "Ditolak" : currentLabel}</span>{isAdmin && <ActivityAdminActions activityId={activity.id} activityName={activity.activityCode || activity.title} />}</div></div>
       <div className="mt-5 grid gap-3 border-t border-stone-100 pt-5 text-sm sm:grid-cols-2"><div><p className="text-xs text-stone-400">Mitra</p><Link href={`/mitra/${activity.partner.slug}`} className="font-semibold text-stone-800 hover:text-emerald-700">{activity.partner.name}</Link></div><div><p className="text-xs text-stone-400">Periode</p><p className="font-semibold text-stone-800">{dateText(activity.dateStart)} — {dateText(activity.dateEnd)}</p></div></div>
     </div>
 
