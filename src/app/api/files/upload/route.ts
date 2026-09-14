@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth";
+import { putStoredFile, r2Enabled } from "@/lib/storage";
 
 const MAX_SIZE = 10 * 1024 * 1024;
 const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]);
@@ -24,8 +24,9 @@ export async function POST(request: Request) {
     const data = Buffer.from(await file.arrayBuffer());
     if (data.length > MAX_SIZE) return NextResponse.json({ error: "Ukuran file maksimal 10 MB." }, { status: 400 });
     if (!validSignature(file.type, data)) return NextResponse.json({ error: "File tidak valid." }, { status: 400 });
-    const stored = await db.storedFile.create({ data: { mimeType: file.type, size: data.length, data } });
-    return NextResponse.json({ ok: true, url: `/api/files/${stored.id}` });
+    const id = `file_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+    const { url } = await putStoredFile({ id, data, mimeType: file.type });
+    return NextResponse.json({ ok: true, url });
   } catch (error) {
     console.error("file upload error:", error);
     return NextResponse.json({ error: "Upload foto gagal." }, { status: 500 });

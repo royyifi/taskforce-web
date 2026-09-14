@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { putStoredFile } from "@/lib/storage";
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 const MAX_PDF_SIZE = 10 * 1024 * 1024;
@@ -23,8 +23,9 @@ export async function POST(request: Request) {
     const data = Buffer.from(await file.arrayBuffer());
     if (data.length > maxSize) return NextResponse.json({ error: isPdf ? "Ukuran PDF maksimal 10 MB." : "Ukuran foto maksimal 5 MB." }, { status: 400 });
     if (!validSignature(file.type, data)) return NextResponse.json({ error: "File tidak valid." }, { status: 400 });
-    const stored = await db.storedFile.create({ data: { mimeType: file.type, size: data.length, data } });
-    return NextResponse.json({ ok: true, url: `/api/files/${stored.id}` });
+    const id = `file_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+    const { url } = await putStoredFile({ id, data, mimeType: file.type });
+    return NextResponse.json({ ok: true, url });
   } catch (error) {
     console.error("activity upload error:", error);
     return NextResponse.json({ error: "Upload foto gagal." }, { status: 500 });

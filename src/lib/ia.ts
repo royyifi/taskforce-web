@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { getStoredFile } from "@/lib/storage";
 
 export type IaFirstPartyKey = "PRODI" | "FAKULTAS";
 
@@ -138,7 +139,7 @@ export async function getIaDocumentData(id: string, nomorPreview?: string, langO
   if (!activity) return null;
   const firstParty = getIaFirstParty(activity.iaFirstParty);
   const partnerLogo = activity.iaPartnerLogoFileId
-    ? await db.storedFile.findUnique({ where: { id: activity.iaPartnerLogoFileId }, select: { mimeType: true, data: true } })
+    ? await getStoredFile(activity.iaPartnerLogoFileId)
     : null;
   const displayNumber = activity.iaNumber || (nomorPreview ? decodeURIComponent(nomorPreview) : "—");
   const partnerName = activity.iaPartnerName || activity.partner.name;
