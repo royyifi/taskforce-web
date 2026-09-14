@@ -21,10 +21,12 @@ function cloudinaryUrl(resourceType: "image" | "raw", id: string) {
 }
 
 export async function putStoredFile(params: { id: string; data: Buffer; mimeType: string }) {
-  if (!cloudinaryEnabled) {
+  async function storeInDatabase() {
     const stored = await db.storedFile.create({ data: { id: params.id, mimeType: params.mimeType, size: params.data.length, data: params.data } });
     return { id: stored.id, url: `/api/files/${stored.id}` };
   }
+
+  if (!cloudinaryEnabled) return storeInDatabase();
 
   const timestamp = String(Math.floor(Date.now() / 1000));
   const publicId = `files/${params.id}`;
@@ -39,7 +41,10 @@ export async function putStoredFile(params: { id: string; data: Buffer; mimeType
 
   const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`, { method: "POST", body: form });
   const result = await response.json() as { secure_url?: string; error?: { message?: string } };
-  if (!response.ok || !result.secure_url) throw new Error(result.error?.message || `Cloudinary upload failed: ${response.status}`);
+  if (!response.ok || !result.secure_url) {
+    console.error(`Cloudinary upload failed (${response.status}): ${result.error?.message || "Unknown error"}`);
+    return storeInDatabase();
+  }
   await db.storedFile.create({ data: { id: params.id, mimeType: params.mimeType, size: params.data.length, data: Buffer.alloc(0) } });
   return { id: params.id, url: result.secure_url };
 }
