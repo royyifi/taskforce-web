@@ -40,25 +40,26 @@ export async function putStoredFile(params: { id: string; data: Buffer; mimeType
   const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`, { method: "POST", body: form });
   if (!response.ok) throw new Error(`Cloudinary upload failed: ${response.status}`);
   const result = await response.json() as { secure_url: string };
+  await db.storedFile.create({ data: { id: params.id, mimeType: params.mimeType, size: params.data.length, data: Buffer.alloc(0) } });
   return { id: params.id, url: result.secure_url };
 }
 
 export async function getStoredFile(id: string) {
   const legacy = await db.storedFile.findUnique({ where: { id } });
-  if (legacy) return legacy;
-  if (!cloudinaryEnabled) return null;
+  if (!cloudinaryEnabled) return legacy;
 
+  // New uploads are public in Cloudinary; legacy database blobs remain fallback.
   for (const resourceType of ["image", "raw"] as const) {
     try {
       const response = await fetch(cloudinaryUrl(resourceType, id));
       if (!response.ok) continue;
       const data = Buffer.from(await response.arrayBuffer());
-      return { mimeType: response.headers.get("content-type") || "application/octet-stream", size: data.length, data };
+      return { mimeType: response.headers.get("content-type") || legacy?.mimeType || "application/octet-stream", size: data.length, data };
     } catch {
-      // Try the other Cloudinary resource type before reporting not found.
+      // Try the other Cloudinary resource type before falling back to legacy storage.
     }
   }
-  return null;
+  return legacy;
 }
 
 export async function deleteStoredFile(id: string) {
