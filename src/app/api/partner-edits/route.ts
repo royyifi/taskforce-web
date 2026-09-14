@@ -8,12 +8,16 @@ const VALID_CODES = ["MG", "PD", "PM", "PN", "PP", "SPI"];
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { partnerId, submitterName, submitterEmail, submitterUnit, note, proposedFields, ...rest } = body;
+    const { partnerId, submitterName, submitterEmail, submitterUnit, note, proposedFields, logoFileId, ...rest } = body;
     if (!partnerId || !submitterName) return NextResponse.json({ error: "Nama pelapor wajib diisi." }, { status: 400 });
     if (submitterEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(submitterEmail))) return NextResponse.json({ error: "Format email tidak valid." }, { status: 400 });
 
     const partner = await db.partner.findUnique({ where: { id: partnerId } });
     if (!partner) return NextResponse.json({ error: "Mitra tidak ditemukan." }, { status: 404 });
+    if (logoFileId && logoFileId !== partner.logoFileId) {
+      const logo = await db.storedFile.findUnique({ where: { id: String(logoFileId) } });
+      if (!logo || !logo.mimeType.startsWith("image/")) return NextResponse.json({ error: "Logo mitra tidak valid." }, { status: 400 });
+    }
 
     // Simpan hanya field yang benar-benar berubah
     const changes: Record<string, string> = {};
@@ -37,12 +41,14 @@ export async function POST(request: Request) {
       }
     }
 
-    if (Object.keys(changes).length === 0 && !storedFields) return NextResponse.json({ error: "Tidak ada perubahan yang dikirim." }, { status: 400 });
+    const hasLogoChange = logoFileId && logoFileId !== partner.logoFileId;
+    if (Object.keys(changes).length === 0 && !storedFields && !hasLogoChange) return NextResponse.json({ error: "Tidak ada perubahan yang dikirim." }, { status: 400 });
 
     const proposal = await db.partnerEditProposal.create({
       data: {
         partnerId,
         ...changes,
+        logoFileId: logoFileId && logoFileId !== partner.logoFileId ? String(logoFileId) : null,
         proposedFields: storedFields,
         submitterName,
         submitterEmail: submitterEmail || null,

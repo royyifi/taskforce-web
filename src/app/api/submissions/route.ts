@@ -32,14 +32,14 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { partnerId, activityType, title, description, goal, dateStart, dateEnd, location, participantCount, dosenName, lecturers, partnerPIC, partnerPICPosition, partnerPICPhone, partnerPICEmail, submitterName, submitterEmail, submitterNim, submitterPhone, prodi, submitterUnit, participants, rkpUrl, spmUrl, logoFileId } = body;
+  const { partnerId, activityType, title, description, goal, dateStart, dateEnd, location, participantCount, dosenName, lecturers, partnerPIC, partnerPICPosition, partnerPICPhone, partnerPICEmail, submitterName, submitterEmail, submitterNim, submitterPhone, prodi, submitterUnit, participants, rkpUrl, spmUrl } = body;
   if (!partnerId || !title || !activityType || !dateStart || !dateEnd || !submitterName || !submitterNim || !prodi) return NextResponse.json({ error: "Mitra, judul, jenis, periode, dan identitas mahasiswa wajib diisi." }, { status: 400 });
-  if (!logoFileId) return NextResponse.json({ error: "Logo mitra wajib diunggah." }, { status: 400 });
   if (activityType === "MAGANG" && !rkpUrl) return NextResponse.json({ error: "Dokumen RKP wajib diunggah untuk kegiatan magang." }, { status: 400 });
   const partner = await db.partner.findUnique({ where: { id: partnerId, status: "APPROVED" } });
   if (!partner) return NextResponse.json({ error: "Mitra tidak ditemukan." }, { status: 404 });
+  if (!partner.logoFileId) return NextResponse.json({ error: "Logo mitra belum diunggah. Silakan hubungi admin." }, { status: 400 });
 
-  const logo = await db.storedFile.findUnique({ where: { id: String(logoFileId) } });
+  const logo = await db.storedFile.findUnique({ where: { id: partner.logoFileId } });
   if (!logo || !logo.mimeType.startsWith("image/")) return NextResponse.json({ error: "Logo mitra tidak valid." }, { status: 400 });
 
   const activityCode = await generateActivityCode();
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
   const activity = await db.activity.create({ data: {
     activityCode, partnerId, title: String(title).trim(), type: String(activityType), dateStart: new Date(dateStart), dateEnd: new Date(dateEnd), location: location || null, description: description || null, goal: goal || null,
     participants: Number(participantCount) || studentRows.length || null, partnerPic: partnerPIC || null, partnerPICPosition: partnerPICPosition || null, partnerPICPhone: partnerPICPhone || null, partnerPICEmail: partnerPICEmail || null,
-    dosenName: lecturerRows[0]?.name || null, rkpStatus: rkpUrl ? "DIAJUKAN" : "BELUM_ADA", rkpUrl: rkpUrl || null, spmUrl: spmUrl || null, iaPartnerLogoFileId: String(logoFileId), submitterNim, submitterPhone: submitterPhone || null, submitterUnit: prodi || submitterUnit || null,
+    dosenName: lecturerRows[0]?.name || null, rkpStatus: rkpUrl ? "DIAJUKAN" : "BELUM_ADA", rkpUrl: rkpUrl || null, spmUrl: spmUrl || null, iaPartnerLogoFileId: partner.logoFileId, submitterNim, submitterPhone: submitterPhone || null, submitterUnit: prodi || submitterUnit || null,
     submittedBy: String(submitterName).trim(), submittedEmail: submitterEmail || null, status: "PENDING",
     students: { create: studentRows },
     lecturers: { create: lecturerRows },

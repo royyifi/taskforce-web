@@ -41,6 +41,7 @@ export async function GET(req: Request) {
         agreementActive,
         fieldNames: partner.cooperationFields.map(f => f.cooperationField.name),
         fieldCodes: partner.cooperationFields.map(f => f.cooperationField.code),
+        logoFileId: partner.logoFileId,
       },
     });
   }

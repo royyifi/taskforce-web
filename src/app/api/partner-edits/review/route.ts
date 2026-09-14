@@ -25,6 +25,7 @@ export async function PATCH(request: Request) {
       const value = (proposal as unknown as Record<string, unknown>)[key];
       if (value !== null && value !== undefined) data[key] = String(value);
     }
+    if (proposal.logoFileId) data.logoFileId = String(proposal.logoFileId);
     if (Object.keys(data).length > 0) await db.partner.update({ where: { id: proposal.partnerId }, data: data as never });
 
     // Terapkan perubahan potensi kerja sama jika ada

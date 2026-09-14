@@ -49,7 +49,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const body = await request.json();
-  const { partnerId, activityType, title, description, goal, dateStart, dateEnd, location, participantCount, dosenName, lecturers, partnerPIC, partnerPICPosition, partnerPICPhone, partnerPICEmail, submitterName, submitterEmail, submitterNim, submitterPhone, prodi, submitterUnit, participants, rkpUrl, spmUrl, logoFileId } = body;
+  const { partnerId, activityType, title, description, goal, dateStart, dateEnd, location, participantCount, dosenName, lecturers, partnerPIC, partnerPICPosition, partnerPICPhone, partnerPICEmail, submitterName, submitterEmail, submitterNim, submitterPhone, prodi, submitterUnit, participants, rkpUrl, spmUrl } = body;
   if (!partnerId || !title || !activityType || !dateStart || !dateEnd || !submitterName || !submitterNim || !prodi) return responseError("Mitra, judul, jenis, periode, dan identitas mahasiswa wajib diisi.", 400);
   if (activityType === "MAGANG" && !rkpUrl) return responseError("Dokumen RKP wajib diunggah untuk kegiatan magang.", 400);
 
@@ -57,6 +57,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!activity || activity.status !== "REVISION_REQUESTED") return responseError("Pengajuan tidak dapat diperbaiki.", 404);
   const partner = await db.partner.findUnique({ where: { id: partnerId, status: "APPROVED" } });
   if (!partner) return responseError("Mitra tidak ditemukan.", 404);
+  if (!partner.logoFileId) return responseError("Logo mitra belum diunggah. Silakan hubungi admin.", 400);
+  const logo = await db.storedFile.findUnique({ where: { id: partner.logoFileId } });
+  if (!logo || !logo.mimeType.startsWith("image/")) return responseError("Logo mitra tidak valid.", 400);
   const studentRows = cleanParticipants(participants);
   const lecturerRows = cleanLecturers(lecturers || (dosenName ? [dosenName] : []));
 
@@ -73,7 +76,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         submittedBy: String(submitterName).trim(), submittedEmail: submitterEmail || null,
         ...(rkpUrl ? { rkpUrl, rkpStatus: "DIAJUKAN" } : {}),
         ...(spmUrl ? { spmUrl } : {}),
-        ...(logoFileId ? { iaPartnerLogoFileId: String(logoFileId) } : {}),
+        iaPartnerLogoFileId: partner.logoFileId,
         status: "PENDING", reviewNote: null, reviewedAt: null,
         students: { create: studentRows },
         lecturers: { create: lecturerRows },

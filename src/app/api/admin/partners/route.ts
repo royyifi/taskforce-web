@@ -16,6 +16,7 @@ export async function GET() {
       picPosition: true,
       picPhone: true,
       picEmail: true,
+      logoFileId: true,
     },
     orderBy: { name: "asc" },
   });

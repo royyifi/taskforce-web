@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     if (!validSignature(file.type, data)) return NextResponse.json({ error: "File tidak valid." }, { status: 400 });
     const id = `file_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
     const { url } = await putStoredFile({ id, data, mimeType: file.type });
-    return NextResponse.json({ ok: true, url });
+    return NextResponse.json({ ok: true, url, fileId: id });
   } catch (error) {
     console.error("file upload error:", error);
     return NextResponse.json({ error: "Upload foto gagal." }, { status: 500 });

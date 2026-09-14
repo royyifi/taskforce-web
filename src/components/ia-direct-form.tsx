@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertCircle, CheckCircle2, FileUp, FileSignature, Plus, Trash2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, FileSignature, Plus, Trash2 } from "lucide-react";
 
-interface Partner { id: string; name: string; level: string; picName: string | null; picPosition: string | null; }
+interface Partner { id: string; name: string; level: string; picName: string | null; picPosition: string | null; logoFileId: string | null; }
 
 type State = "idle" | "submitting" | "done";
 
@@ -22,6 +22,8 @@ export default function IaDirectForm({ onDone }: { onDone: () => void }) {
   const [newAddress, setNewAddress] = useState("");
   const [newPicName, setNewPicName] = useState("");
   const [newPicPosition, setNewPicPosition] = useState("");
+  const [newLogoFileId, setNewLogoFileId] = useState<string | null>(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
 
   // Activity fields
   const [programName, setProgramName] = useState("");
@@ -32,36 +34,16 @@ export default function IaDirectForm({ onDone }: { onDone: () => void }) {
   const [firstParty, setFirstParty] = useState<"PRODI" | "FAKULTAS">("PRODI");
   const [lang, setLang] = useState<"ID" | "EN">("ID");
 
-  // Logo upload
-  const [logoFileId, setLogoFileId] = useState("");
-  const [logoName, setLogoName] = useState("");
-  const [uploadingLogo, setUploadingLogo] = useState(false);
-
   useEffect(() => {
     if (!open) return;
     fetch("/api/admin/ia-direct-list").then(r => r.json()).then(d => { if (d.partners) setPartners(d.partners); }).catch(() => {});
   }, [open]);
 
-  async function uploadLogo(file: File) {
-    setUploadingLogo(true);
-    setMessage("");
-    const fd = new FormData();
-    fd.append("file", file);
-    const res = await fetch("/api/activities/upload", { method: "POST", body: fd });
-    const d = await res.json();
-    if (res.ok && d.url) {
-      setLogoFileId(d.url.split("/").pop() || "");
-      setLogoName(file.name);
-    } else {
-      setMessage(d.error || "Upload logo gagal.");
-    }
-    setUploadingLogo(false);
-  }
-
   async function submit() {
     if (!selectedPartnerId && !newName) return;
     if (!programName.trim() || !dateStart || !dateEnd) return;
-    if (!logoFileId) { setMessage("Logo mitra wajib diunggah."); return; }
+    const selectedP = partners.find(p => p.id === selectedPartnerId);
+    if (!newMode && !selectedP?.logoFileId) { setMessage("Logo mitra belum diunggah. Tambahkan logo terlebih dahulu pada data mitra."); return; }
     if (personil.filter(Boolean).length === 0) { setMessage("Minimal satu personil wajib diisi."); return; }
     setState("submitting"); setMessage("");
 
@@ -77,6 +59,7 @@ export default function IaDirectForm({ onDone }: { onDone: () => void }) {
           address: newAddress || null,
           picName: newPicName || null,
           picPosition: newPicPosition || null,
+          logoFileId: newLogoFileId,
           source: "IA_DIRECT",
         }),
       });
@@ -90,7 +73,6 @@ export default function IaDirectForm({ onDone }: { onDone: () => void }) {
     if (!partnerId) { setMessage("Pilih mitra atau lengkapi data mitra baru."); setState("idle"); return; }
 
     // 2. Create activity
-    const selectedP = partners.find(p => p.id === partnerId);
     const picName = newMode ? (newPicName || newName) : (selectedP?.picName || selectedP?.name || "");
     const picPos = newMode ? (newPicPosition || "Pihak Mitra") : (selectedP?.picPosition || "Pihak Mitra");
 
@@ -103,7 +85,6 @@ export default function IaDirectForm({ onDone }: { onDone: () => void }) {
       personil: personil.filter(Boolean).map(name => ({ name })),
       firstParty,
       lang,
-      logoFileId,
       partnerPIC: picName,
       partnerPICPosition: picPos,
       source: "IA_DIRECT",
@@ -120,13 +101,28 @@ export default function IaDirectForm({ onDone }: { onDone: () => void }) {
       setMessage(`IA "${programName}" berhasil dibuat. Langsung masuk antrean penerbitan.`);
       // Reset
       setProgramName(""); setDateStart(""); setDateEnd(""); setLocation("");
-      setPersonil([""]); setSelectedPartnerId(""); setLogoFileId(""); setLogoName("");
-      setNewMode(false); setNewName(""); setNewAddress(""); setNewPicName(""); setNewPicPosition("");
+      setPersonil([""]); setSelectedPartnerId(""); 
+      setNewMode(false); setNewName(""); setNewAddress(""); setNewPicName(""); setNewPicPosition(""); setNewLogoFileId(null);
       onDone();
     } else {
       setMessage(d.error || "Gagal membuat IA.");
       setState("idle");
     }
+  }
+
+
+  async function uploadLogo(file: File) {
+    if (!newMode) return;
+    setUploadingLogo(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const r = await fetch("/api/files/upload", { method: "POST", body: fd });
+      const data = await r.json();
+      if (!r.ok) { setMessage(data.error || "Upload logo gagal."); return; }
+      setNewLogoFileId(data.fileId);
+    } catch { setMessage("Upload logo gagal. Periksa koneksi lalu coba lagi."); }
+    finally { setUploadingLogo(false); }
   }
 
   if (!open) {
@@ -229,20 +225,19 @@ export default function IaDirectForm({ onDone }: { onDone: () => void }) {
                     className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm" />
                 </label>
               </div>
+              <div>
+                <span className="mb-1 block text-xs font-semibold text-stone-700">Logo mitra * {uploadingLogo && <span className="font-normal text-stone-400">Mengunggah...</span>}</span>
+                <input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => { const f = e.target.files?.[0]; if (f) uploadLogo(f); }} className="h-10 w-full text-xs file:mr-2 file:rounded-lg file:border-0 file:bg-emerald-50 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-emerald-700 hover:file:bg-emerald-100" />
+                {newLogoFileId && <p className="mt-1 text-xs text-emerald-600">✓ Logo berhasil diunggah</p>}
+                {!newLogoFileId && !uploadingLogo && <p className="mt-1 text-xs text-amber-600">Logo wajib diunggah sebelum membuat mitra</p>}
+              </div>
             </div>
           )}
 
           {/* Logo */}
           <div onClick={() => setPartnerSearchOpen(false)}>
-          <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-emerald-300 bg-white p-4 hover:bg-emerald-50/30 transition-colors">
-            <FileUp className="h-5 w-5 text-emerald-600" />
-            <span className="text-sm text-stone-600">
-              <span className="font-semibold text-emerald-700">Logo mitra *</span> — {logoName || "PNG, JPG, atau WEBP (wajib untuk kop IA)"}
-            </span>
-            <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only"
-              onChange={e => { const f = e.target.files?.[0]; if (f) void uploadLogo(f); }} />
-          </label>
-          {uploadingLogo && <p className="text-xs text-blue-600">Mengunggah logo...</p>}
+          {!newMode && selectedPartnerId && !partners.find(p => p.id === selectedPartnerId)?.logoFileId && <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">Logo mitra belum tersedia. Unggah logo di data mitra terlebih dahulu.</p>}
+          {!newMode && selectedPartnerId && partners.find(p => p.id === selectedPartnerId)?.logoFileId && <p className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">Logo mitra tersedia.</p>}
           </div>
         </div>
 
@@ -325,7 +320,7 @@ export default function IaDirectForm({ onDone }: { onDone: () => void }) {
 
         {/* SUBMIT */}
         <div className="flex items-center gap-3 border-t border-stone-100 pt-4">
-          <button type="button" onClick={() => void submit()} disabled={state === "submitting" || !programName.trim() || !dateStart || !dateEnd || !logoFileId}
+          <button type="button" onClick={() => void submit()} disabled={state === "submitting" || !programName.trim() || !dateStart || !dateEnd}
             className="inline-flex items-center gap-2 rounded-lg bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50 hover:bg-emerald-800 transition-colors">
             <FileSignature className="h-4 w-4" />
             {state === "submitting" ? "Membuat..." : "Buat IA & Masuk Antrean"}

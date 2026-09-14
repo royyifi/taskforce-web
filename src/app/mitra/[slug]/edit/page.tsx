@@ -13,7 +13,7 @@ interface PartnerData {
   id: string; name: string; level: string; category: string | null;
   address: string | null; phone: string | null; email: string | null; website: string | null;
   picName: string | null; picPosition: string | null; picPhone: string | null; picEmail: string | null;
-  city: string | null; country: string | null; fieldCodes?: string[];
+  city: string | null; country: string | null; logoFileId: string | null; fieldCodes?: string[];
 }
 
 export default function EditMitraPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -22,6 +22,8 @@ export default function EditMitraPage({ params }: { params: Promise<{ slug: stri
   const [initialValues, setInitialValues] = useState<Record<string, string>>({});
   const [selectedFields, setSelectedFields] = useState<string[]>([]);
   const [initialFields, setInitialFields] = useState<string[]>([]);
+  const [logoFileId, setLogoFileId] = useState<string | null>(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [state, setState] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
 
@@ -31,6 +33,7 @@ export default function EditMitraPage({ params }: { params: Promise<{ slug: stri
       if (!p) return;
       const values = { name: p.name || "", level: p.level || "NASIONAL", category: p.category || "", address: p.address || "", phone: p.phone || "", email: p.email || "", website: p.website || "", picName: p.picName || "", picPosition: p.picPosition || "", picPhone: p.picPhone || "", picEmail: p.picEmail || "", city: p.city || "", country: p.country || "" };
       setPartner(p);
+      setLogoFileId(p.logoFileId || null);
       const currentFields = Array.isArray(p.fieldCodes) ? p.fieldCodes : [];
       setInitialFields(currentFields);
       setSelectedFields(currentFields);
@@ -41,6 +44,20 @@ export default function EditMitraPage({ params }: { params: Promise<{ slug: stri
 
   const set = (key: string, value: string) => setForm(prev => ({ ...prev, [key]: value }));
 
+  async function uploadLogo(file: File) {
+    setUploadingLogo(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const r = await fetch("/api/files/upload", { method: "POST", body: fd });
+      const data = await r.json();
+      if (!r.ok) { setState("error"); setMessage(data.error || "Upload logo gagal."); return; }
+      setLogoFileId(data.fileId);
+      setState("idle");
+    } catch { setState("error"); setMessage("Upload logo gagal. Periksa koneksi lalu coba lagi."); }
+    finally { setUploadingLogo(false); }
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (selectedFields.length === 0) { setState("error"); setMessage("Pilih minimal satu potensi kerja sama."); return; }
@@ -48,7 +65,7 @@ export default function EditMitraPage({ params }: { params: Promise<{ slug: stri
     const { submitterName, submitterEmail, submitterUnit, note, ...data } = form;
     const changes = Object.fromEntries(Object.entries(data).filter(([key, value]) => value.trim() !== (initialValues[key] || "").trim()));
     const fieldsChanged = selectedFields.slice().sort().join(",") !== initialFields.slice().sort().join(",");
-    const res = await fetch("/api/partner-edits", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ partnerId: partner?.id, submitterName, submitterEmail: submitterEmail || undefined, submitterUnit, note, ...(fieldsChanged ? { proposedFields: selectedFields } : {}), ...changes }) });
+    const res = await fetch("/api/partner-edits", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ partnerId: partner?.id, submitterName, submitterEmail: submitterEmail || undefined, submitterUnit, note, ...(fieldsChanged ? { proposedFields: selectedFields } : {}), logoFileId: logoFileId || undefined, ...changes }) });
     const result = await res.json();
     setMessage(result.message || result.error);
     setState(res.ok ? "success" : "error");
@@ -92,6 +109,14 @@ export default function EditMitraPage({ params }: { params: Promise<{ slug: stri
               <Input label="Telepon PIC" value={form.picPhone} onChange={v => set("picPhone", v)} />
               <Input label="Email PIC" value={form.picEmail} onChange={v => set("picEmail", v)} />
             </div>
+          </Section>
+
+          <Section title="Logo Mitra">
+            <p className="mb-3 text-sm text-stone-500">Logo akan digunakan otomatis pada dokumen IA mitra ini. Usulan logo baru akan diverifikasi admin.</p>
+            <input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => { const f = e.target.files?.[0]; if (f) uploadLogo(f); }} className="h-10 w-full text-xs file:mr-2 file:rounded-lg file:border-0 file:bg-emerald-50 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-emerald-700 hover:file:bg-emerald-100" />
+            {uploadingLogo && <p className="mt-1 text-xs text-stone-400">Mengunggah logo...</p>}
+            {logoFileId && <p className="mt-1 text-xs text-emerald-600">Logo tersedia / berhasil diunggah</p>}
+            {!logoFileId && !uploadingLogo && <p className="mt-1 text-xs text-amber-600">Mitra belum memiliki logo.</p>}
           </Section>
 
           <Section title="Potensi Kerja Sama">

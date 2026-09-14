@@ -39,6 +39,7 @@ model Partner {
   picPosition  String?
   picPhone     String?
   picEmail     String?
+  logoFileId   String? // StoredFile id logo mitra untuk IA
   // Sumber data
   source       String? // SISTER | Excel | Usulan, dll
   internalNote String? // catatan internal, tidak publik
@@ -82,6 +83,7 @@ model PartnerEditProposal {
   city           String?
   country        String?
   description    String?
+  logoFileId     String? // usulan logo mitra baru
   proposedFields String? // JSON array kode bidang kerja sama
   // pelapor
   submitterName  String
