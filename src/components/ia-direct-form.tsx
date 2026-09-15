@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertCircle, CheckCircle2, FileSignature, Plus, Trash2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, FileSignature, FileText, FileUp, Plus, Trash2, X } from "lucide-react";
 
 interface Partner { id: string; name: string; level: string; picName: string | null; picPosition: string | null; logoFileId: string | null; }
 
@@ -24,6 +24,9 @@ export default function IaDirectForm({ onDone }: { onDone: () => void }) {
   const [newPicPosition, setNewPicPosition] = useState("");
   const [newLogoFileId, setNewLogoFileId] = useState<string | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [proposalLogoFileId, setProposalLogoFileId] = useState<string | null>(null);
+  const [uploadingProposalLogo, setUploadingProposalLogo] = useState(false);
+  const [proposalLogoName, setProposalLogoName] = useState<string | null>(null);
 
   // Activity fields
   const [programName, setProgramName] = useState("");
@@ -43,7 +46,7 @@ export default function IaDirectForm({ onDone }: { onDone: () => void }) {
     if (!selectedPartnerId && !newName) return;
     if (!programName.trim() || !dateStart || !dateEnd) return;
     const selectedP = partners.find(p => p.id === selectedPartnerId);
-    if (!newMode && !selectedP?.logoFileId) { setMessage("Logo mitra belum diunggah. Tambahkan logo terlebih dahulu pada data mitra."); return; }
+    if (!newMode && !selectedP?.logoFileId && !proposalLogoFileId) { setMessage("Logo mitra belum diunggah. Tambahkan logo terlebih dahulu pada data mitra atau upload logo melalui form."); return; }
     if (personil.filter(Boolean).length === 0) { setMessage("Minimal satu personil wajib diisi."); return; }
     setState("submitting"); setMessage("");
 
@@ -88,6 +91,7 @@ export default function IaDirectForm({ onDone }: { onDone: () => void }) {
       partnerPIC: picName,
       partnerPICPosition: picPos,
       source: "IA_DIRECT",
+      proposalLogoFileId: (partners.find(p => p.id === selectedPartnerId)?.logoFileId || newMode) ? undefined : (proposalLogoFileId || undefined),
     };
 
     const res = await fetch("/api/admin/ia-direct-create", {
@@ -110,6 +114,20 @@ export default function IaDirectForm({ onDone }: { onDone: () => void }) {
     }
   }
 
+
+  async function uploadProposalLogo(file: File) {
+    setUploadingProposalLogo(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const r = await fetch("/api/files/upload", { method: "POST", body: fd });
+      const data = await r.json();
+      if (!r.ok) { setMessage(data.error || "Upload logo gagal."); return; }
+      setProposalLogoFileId(data.fileId);
+      setProposalLogoName(file.name);
+    } catch { setMessage("Upload logo gagal. Periksa koneksi lalu coba lagi."); }
+    finally { setUploadingProposalLogo(false); }
+  }
 
   async function uploadLogo(file: File) {
     if (!newMode) return;
@@ -236,8 +254,8 @@ export default function IaDirectForm({ onDone }: { onDone: () => void }) {
 
           {/* Logo */}
           <div onClick={() => setPartnerSearchOpen(false)}>
-          {!newMode && selectedPartnerId && !partners.find(p => p.id === selectedPartnerId)?.logoFileId && <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">Logo mitra belum tersedia. Unggah logo di data mitra terlebih dahulu.</p>}
-          {!newMode && selectedPartnerId && partners.find(p => p.id === selectedPartnerId)?.logoFileId && <p className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">Logo mitra tersedia.</p>}
+          {!newMode && selectedPartnerId && !partners.find(p => p.id === selectedPartnerId)?.logoFileId && <div className="rounded-xl border border-stone-100 bg-stone-50 p-3"><p className="text-sm font-semibold text-stone-800">Logo Mitra</p><div className="mt-2 flex flex-wrap items-center gap-3"><label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-stone-200 bg-white px-3 py-2.5 text-sm font-semibold text-stone-600 hover:bg-stone-50"><FileUp className="h-4 w-4" /> Pilih Logo<input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) uploadProposalLogo(f); }} /></label>{proposalLogoFileId ? <span className="inline-flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700"><FileText className="h-4 w-4" /> Logo terunggah<button type="button" onClick={() => setProposalLogoFileId(null)} className="text-emerald-600 hover:text-red-600"><X className="h-3.5 w-3.5" /></button></span> : <span className="text-xs text-stone-400">Belum ada logo</span>}{uploadingProposalLogo && <span className="text-xs text-emerald-700">Mengunggah...</span>}</div><p className="mt-2 text-xs text-stone-500">Jika mitra belum memiliki logo, Anda dapat menguploadnya di sini.</p></div>}
+          {!newMode && selectedPartnerId && partners.find(p => p.id === selectedPartnerId)?.logoFileId && <p className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">Logo mitra tersedia dan akan otomatis dipakai untuk IA.</p>}
           </div>
         </div>
 

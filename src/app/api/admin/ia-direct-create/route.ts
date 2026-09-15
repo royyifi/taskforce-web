@@ -19,7 +19,7 @@ export async function POST(request: Request) {
   const body = await request.json();
   const {
     partnerId, programName, dateStart, dateEnd, location,
-    personil, firstParty, lang,
+    personil, firstParty, lang, proposalLogoFileId,
     partnerPIC, partnerPICPosition, source,
   } = body;
 
@@ -29,10 +29,11 @@ export async function POST(request: Request) {
   const partner = await db.partner.findUnique({ where: { id: partnerId, status: "APPROVED" } });
   if (!partner) return NextResponse.json({ error: "Mitra tidak ditemukan atau belum disetujui." }, { status: 404 });
 
-  if (!partner.logoFileId) return NextResponse.json({ error: "Logo mitra belum diunggah. Tambahkan logo pada data mitra terlebih dahulu." }, { status: 400 });
+  if (!partner.logoFileId && !proposalLogoFileId) return NextResponse.json({ error: "Logo mitra belum diunggah. Tambahkan logo pada data mitra atau unggah logo baru melalui form." }, { status: 400 });
 
   // Verify logo
-  const logo = await db.storedFile.findUnique({ where: { id: partner.logoFileId } });
+  const logoId = partner.logoFileId || String(proposalLogoFileId);
+  const logo = await db.storedFile.findUnique({ where: { id: logoId } });
   if (!logo || !logo.mimeType.startsWith("image/")) return NextResponse.json({ error: "Logo mitra tidak valid." }, { status: 400 });
 
   const studentRows = cleanParticipants(personil);
@@ -51,6 +52,7 @@ export async function POST(request: Request) {
       partnerPic: partnerPIC || null,
       partnerPICPosition: partnerPICPosition || null,
       iaPartnerLogoFileId: partner.logoFileId,
+      iaProposalLogoFileId: proposalLogoFileId ? String(proposalLogoFileId) : null,
       iaStatus: "DIAJUKAN",
       iaSubmittedAt: new Date(),
       iaFirstParty: firstParty || "PRODI",

@@ -131,15 +131,15 @@ export async function getIaDocumentData(id: string, nomorPreview?: string, langO
   const activity = await db.activity.findUnique({
     where: { id },
     include: {
-      partner: { select: { name: true, level: true, address: true, city: true, picName: true, picPosition: true } },
+      partner: { select: { name: true, level: true, address: true, city: true, picName: true, picPosition: true, logoFileId: true } },
       students: { orderBy: { order: "asc" } },
       lecturers: { orderBy: { order: "asc" } },
     },
   });
   if (!activity) return null;
   const firstParty = getIaFirstParty(activity.iaFirstParty);
-  const partnerLogo = activity.iaPartnerLogoFileId
-    ? await getStoredFile(activity.iaPartnerLogoFileId)
+  const partnerLogo = (activity.partner.logoFileId || activity.iaPartnerLogoFileId)
+    ? await getStoredFile(activity.partner.logoFileId || activity.iaPartnerLogoFileId!)
     : null;
   const displayNumber = activity.iaNumber || (nomorPreview ? decodeURIComponent(nomorPreview) : "—");
   const partnerName = activity.iaPartnerName || activity.partner.name;

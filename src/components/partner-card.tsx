@@ -14,6 +14,7 @@ export interface PartnerLite {
   phone: string | null;
   email: string | null;
   website: string | null;
+  logoFileId: string | null;
   utilizationLabel: string;
   utilizationColor: string;
   fieldNames: string[];
@@ -41,11 +42,14 @@ export default function PartnerCard({ partner }: { partner: PartnerLite }) {
       href={`/mitra/${partner.slug}`}
       className="group block rounded-2xl border border-stone-100 bg-white p-5 shadow-sm transition-all hover:shadow-md hover:border-emerald-200"
     >
-      {/* Nama */}
+      {/* Nama + Logo */}
       <div className="mb-2 flex items-start justify-between gap-3">
-        <h3 className="font-semibold leading-snug text-stone-900 group-hover:text-emerald-700 transition-colors">
-          {partner.name}
-        </h3>
+        <div className="flex items-center gap-2.5">
+          {partner.logoFileId && <img src={`/api/files/${partner.logoFileId}`} alt="Logo" className="h-9 w-9 shrink-0 rounded-lg border border-stone-100 object-contain" />}
+          <h3 className="font-semibold leading-snug text-stone-900 group-hover:text-emerald-700 transition-colors">
+            {partner.name}
+          </h3>
+        </div>
       </div>
 
       {/* Level + Kategori badges */}

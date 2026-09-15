@@ -170,6 +170,7 @@ model Activity {
   iaPartnerPicPosition String?
   iaPartnerAddress     String?
   iaPartnerLogoFileId  String? // StoredFile id logo mitra untuk IA
+  iaProposalLogoFileId String? // usulan logo mitra dari pengajuan sebelum disetujui
   iaSubmittedAt  DateTime? // mahasiswa mengajukan IA
   iaReviewNote   String?  // catatan admin saat mengembalikan IA
   iaLanguage     String?  // bahasa dokumen IA: ID | EN

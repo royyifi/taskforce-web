@@ -89,6 +89,7 @@ export async function GET(req: Request) {
       email: p.email,
       website: p.website,
       address: p.address,
+      logoFileId: p.logoFileId,
       utilizationLabel,
       utilizationColor,
       fieldNames: p.cooperationFields.map(f => f.cooperationField.name),

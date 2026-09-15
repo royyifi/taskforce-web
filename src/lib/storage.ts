@@ -67,6 +67,10 @@ export async function getStoredFile(id: string) {
   return legacy;
 }
 
-export async function deleteStoredFile(id: string) {
+export async function deleteStoredFileById(id: string) {
   await db.storedFile.deleteMany({ where: { id } });
+}
+
+export async function deleteStoredFile(id: string) {
+  await deleteStoredFileById(id);
 }

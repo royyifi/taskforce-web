@@ -31,6 +31,7 @@ async function getDashboardData() {
   const partnerCards: PartnerLite[] = partners.slice(0, 6).map(p => ({
     id: p.id, slug: p.slug, name: p.name, level: p.level, category: p.category,
     city: p.city, country: p.country, address: p.address, phone: p.phone, email: p.email, website: p.website,
+    logoFileId: p.logoFileId,
     utilizationLabel: usedPartnerIds.has(p.id) ? "Sudah ada Implementasi" : "",
     utilizationColor: usedPartnerIds.has(p.id) ? "green" : "gray",
     fieldNames: p.cooperationFields.map(f => f.cooperationField.name),

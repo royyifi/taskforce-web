@@ -24,9 +24,10 @@ export async function POST(request: Request) {
   const { name, level, address, picName, picPosition, logoFileId } = body;
 
   if (!name || !String(name).trim()) return NextResponse.json({ error: "Nama mitra wajib diisi." }, { status: 400 });
-  if (!logoFileId) return NextResponse.json({ error: "Logo mitra wajib diunggah sebelum membuat mitra." }, { status: 400 });
-  const logo = await db.storedFile.findUnique({ where: { id: String(logoFileId) } });
-  if (!logo || !logo.mimeType.startsWith("image/")) return NextResponse.json({ error: "Logo mitra tidak valid." }, { status: 400 });
+  if (logoFileId) {
+    const logo = await db.storedFile.findUnique({ where: { id: String(logoFileId) } });
+    if (!logo || !logo.mimeType.startsWith("image/")) return NextResponse.json({ error: "Logo mitra tidak valid." }, { status: 400 });
+  }
 
   const slug = await uniqueSlug(String(name).trim());
   const partner = await db.partner.create({
@@ -39,7 +40,7 @@ export async function POST(request: Request) {
       picName: picName || null,
       picPosition: picPosition || null,
       source: "IA_DIRECT",
-      logoFileId: String(logoFileId),
+      logoFileId: logoFileId ? String(logoFileId) : null,
       verifiedById: session.id,
       verifiedAt: new Date(),
     },

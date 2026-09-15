@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
-import { putStoredFile } from "@/lib/storage";
+import { putStoredFile, deleteStoredFileById } from "@/lib/storage";
 import { logAudit } from "@/lib/audit";
 
 const MAX_SIZE = 5 * 1024 * 1024;
@@ -17,7 +17,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const session = await requireAdmin();
   if (!session) return NextResponse.json({ error: "Hanya admin yang dapat mengunggah logo mitra." }, { status: 401 });
   const { id } = await params;
-  const partner = await db.partner.findUnique({ where: { id }, select: { id: true, name: true } });
+  const partner = await db.partner.findUnique({ where: { id }, select: { id: true, name: true, logoFileId: true } });
   if (!partner) return NextResponse.json({ error: "Mitra tidak ditemukan." }, { status: 404 });
   try {
     const form = await request.formData();
@@ -30,10 +30,25 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const fileId = `logo_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
     await putStoredFile({ id: fileId, data, mimeType: file.type });
     await db.partner.update({ where: { id }, data: { logoFileId: fileId } });
+    if (partner.logoFileId && partner.logoFileId !== fileId) await deleteStoredFileById(partner.logoFileId);
     await logAudit({ action: "UPDATE", entityType: "Partner", entityId: id, entityName: partner.name, detail: `Logo mitra diperbarui oleh ${session.name}` });
     return NextResponse.json({ ok: true, logoFileId: fileId });
   } catch (error) {
     console.error("partner logo upload error:", error);
     return NextResponse.json({ error: "Upload logo gagal." }, { status: 500 });
   }
+}
+
+export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const session = await requireAdmin();
+  if (!session) return NextResponse.json({ error: "Hanya admin yang dapat menghapus logo mitra." }, { status: 401 });
+  const { id } = await params;
+  const partner = await db.partner.findUnique({ where: { id }, select: { id: true, name: true, logoFileId: true } });
+  if (!partner) return NextResponse.json({ error: "Mitra tidak ditemukan." }, { status: 404 });
+  if (!partner.logoFileId) return NextResponse.json({ ok: true });
+  const oldLogoId = partner.logoFileId;
+  await db.partner.update({ where: { id }, data: { logoFileId: null } });
+  await deleteStoredFileById(oldLogoId);
+  await logAudit({ action: "DELETE", entityType: "Partner", entityId: id, entityName: partner.name, detail: `Logo mitra dihapus oleh ${session.name}` });
+  return NextResponse.json({ ok: true });
 }

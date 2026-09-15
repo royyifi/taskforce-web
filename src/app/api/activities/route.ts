@@ -22,7 +22,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { partnerId, title, type, dateStart, dateEnd, location, description, goal, output, internalPic, partnerPic, partnerPICPosition, partnerPICPhone, partnerPICEmail, unit, participants, photoUrl, driveUrl, publicationUrl, submittedBy, submittedEmail, submitterNim, submitterPhone, submitterUnit, dosenName, rkpStatus, rkpUrl } = body;
+  const { partnerId, title, type, dateStart, dateEnd, location, description, goal, output, internalPic, partnerPic, partnerPICPosition, partnerPICPhone, partnerPICEmail, unit, participants, photoUrl, driveUrl, publicationUrl, submittedBy, submittedEmail, submitterNim, submitterPhone, submitterUnit, dosenName, rkpStatus, rkpUrl, proposalLogoFileId } = body;
   const lecturers = Array.isArray(body.lecturers)
     ? body.lecturers.map((item: unknown) => typeof item === "string" ? { name: item, isLeader: false } : item)
     : [];
@@ -34,9 +34,13 @@ export async function POST(request: Request) {
   if (lecturers.filter((item: { isLeader?: unknown }) => Boolean(item?.isLeader)).length > 1) return NextResponse.json({ error: "Hanya satu dosen yang dapat menjadi ketua pelaksana." }, { status: 400 });
   const partner = await db.partner.findUnique({ where: { id: partnerId, status: "APPROVED" } });
   if (!partner) return NextResponse.json({ error: "Mitra tidak ditemukan." }, { status: 404 });
-  if (!partner.logoFileId) return NextResponse.json({ error: "Logo mitra belum diunggah. Silakan hubungi admin untuk menambahkan logo di data mitra." }, { status: 400 });
-  const logo = await db.storedFile.findUnique({ where: { id: partner.logoFileId } });
-  if (!logo || !logo.mimeType.startsWith("image/")) return NextResponse.json({ error: "Logo mitra tidak valid." }, { status: 400 });
+  if (proposalLogoFileId) {
+    const proposalLogo = await db.storedFile.findUnique({ where: { id: String(proposalLogoFileId) } });
+    if (!proposalLogo || !proposalLogo.mimeType.startsWith("image/")) return NextResponse.json({ error: "Logo mitra tidak valid." }, { status: 400 });
+  } else if (partner.logoFileId) {
+    const logo = await db.storedFile.findUnique({ where: { id: partner.logoFileId } });
+    if (!logo || !logo.mimeType.startsWith("image/")) return NextResponse.json({ error: "Logo mitra tidak valid." }, { status: 400 });
+  }
 
   const activity = await db.activity.create({
     data: {
@@ -46,6 +50,7 @@ export async function POST(request: Request) {
       partnerPICPhone: partnerPICPhone || null, partnerPICEmail: partnerPICEmail || null, unit: unit || null,
       participants: participants ? Number(participants) : null, photoUrl: photoUrl || null,
       iaPartnerLogoFileId: partner.logoFileId,
+      iaProposalLogoFileId: proposalLogoFileId ? String(proposalLogoFileId) : null,
       driveUrl: driveUrl || null, publicationUrl: publicationUrl || null, submittedBy, submittedEmail: submittedEmail || null,
       submitterNim: submitterNim || null, submitterPhone: submitterPhone || null, submitterUnit: submitterUnit || null,
       dosenName: dosenName || null, rkpStatus: rkpStatus || "BELUM_ADA", rkpUrl: rkpUrl || null,
