@@ -66,7 +66,7 @@ export default async function IaDocumentPage({ params, searchParams }: { params:
           <table className="mt-[2mm] w-full border-collapse"><tbody>
             <ActivityRow label={text.table.program} value={programName} />
             <ActivityRow label={text.table.personnel} value={personnel.length ? personnel.map((name, i) => <div key={i}>{name}</div>) : "—"} />
-            <ActivityRow label={text.table.time} value={`${iaDateText(activity.dateStart, text.locale)}-${iaDateText(activity.dateEnd, text.locale)}`} />
+            <ActivityRow label={text.table.time} value={activity.dateStart && activity.dateEnd && activity.dateStart.getTime() === activity.dateEnd.getTime() ? iaDateText(activity.dateStart, text.locale) : `${iaDateText(activity.dateStart, text.locale)}-${iaDateText(activity.dateEnd, text.locale)}`} />
             <ActivityRow label={text.table.place} value={activity.location || "—"} />
           </tbody></table>
         </section>
