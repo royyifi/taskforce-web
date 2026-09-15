@@ -8,7 +8,7 @@ export async function GET() {
   if (!await requireAdmin()) return unauthorized();
   const partners = await db.partner.findMany({
     where: { status: "APPROVED" },
-    select: { id: true, name: true, level: true, picName: true, picPosition: true },
+    select: { id: true, name: true, level: true, picName: true, picPosition: true, logoFileId: true },
     orderBy: { name: "asc" },
   });
   return NextResponse.json({ partners });

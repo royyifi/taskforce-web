@@ -26,8 +26,25 @@ export async function PATCH(request: Request) {
         updateData.activityCode = iaNumber;
         updateData.iaStatus = "DITANDATANGANI";
         updateData.iaConfirmedAt = new Date();
+        if (activity.iaProposalLogoFileId) {
+          const proposalLogo = await db.storedFile.findUnique({ where: { id: activity.iaProposalLogoFileId } });
+          if (!proposalLogo || !proposalLogo.mimeType.startsWith("image/")) return NextResponse.json({ error: "Logo usulan IA tidak valid atau sudah tidak tersedia." }, { status: 400 });
+          const partner = await db.partner.findUnique({ where: { id: activity.partnerId }, select: { logoFileId: true } });
+          if (!partner) return NextResponse.json({ error: "Mitra kegiatan tidak ditemukan." }, { status: 404 });
+          const promotedLogoId = activity.iaProposalLogoFileId;
+          updateData.iaPartnerLogoFileId = promotedLogoId;
+          updateData.iaProposalLogoFileId = null;
+          await db.$transaction([
+            db.partner.update({ where: { id: activity.partnerId }, data: { logoFileId: promotedLogoId } }),
+            db.activity.update({ where: { id: activityId }, data: updateData as never }),
+          ]);
+          if (partner.logoFileId && partner.logoFileId !== promotedLogoId) await db.storedFile.deleteMany({ where: { id: partner.logoFileId } });
+        } else {
+          await db.activity.update({ where: { id: activityId }, data: updateData as never });
+        }
+      } else {
+        await db.activity.update({ where: { id: activityId }, data: updateData as never });
       }
-      await db.activity.update({ where: { id: activityId }, data: updateData });
       await logAudit({ action: "APPROVE", entityType: "Activity", entityId: activityId, entityName: activity.title, detail: `IA ${iaNumber} diterbitkan oleh ${session.name}` });
       return NextResponse.json({ ok: true });
     }
