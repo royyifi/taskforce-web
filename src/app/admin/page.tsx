@@ -7,6 +7,7 @@ import TeamAdmin from "@/components/team-admin";
 import AccountAdmin from "@/components/account-admin";
 import ChangePassword from "@/components/change-password";
 import ContentAdmin from "@/components/content-admin";
+import { formatDateRange } from "@/lib/utils";
 
 interface Stats { totalPartners:number; pendingPartners:number; pendingActivities:number; totalActivities:number; partnersUsed:number; partnersUnused:number; agreementsEndingSoon:number; partnersWithoutPic:number }
 interface PendingPartner { id:string; name:string; level:string; category:string|null; createdAt:string; country:string|null; city:string|null; address:string|null; website:string|null; phone:string|null; email:string|null; picName:string|null; picPosition:string|null; picPhone:string|null; picEmail:string|null; cooperationFields:{code:string;name:string}[]; submitterName:string|null; submitterEmail:string|null; submitterUnit:string|null; reason:string|null }
@@ -171,7 +172,7 @@ export default function AdminPage() {
                 </div>
                 <div className="space-y-1.5 text-xs">
                   <p className="font-bold text-stone-700">Kegiatan</p>
-                  <p><Calendar className="mr-1 inline h-3 w-3 text-stone-400" />{s.dateStart ? new Date(s.dateStart).toLocaleDateString("id-ID") : "-"} — {s.dateEnd ? new Date(s.dateEnd).toLocaleDateString("id-ID") : "-"}</p>
+                  <p><Calendar className="mr-1 inline h-3 w-3 text-stone-400" />{formatDateRange(s.dateStart, s.dateEnd)}</p>
                   <p><MapPin className="mr-1 inline h-3 w-3 text-stone-400" />{s.location || "-"}</p>
                   {(s.lecturers.length > 0 || s.dosenName) && <p>Dosen: {(s.lecturers.length ? s.lecturers : [s.dosenName!]).join(", ")}</p>}
                   {s.goal && <p>Tujuan: {s.goal}</p>}
@@ -365,7 +366,7 @@ function ManualActivityDetails({ activity }: { activity: PendingActivity }) {
       <p className="mb-2 text-xs font-bold uppercase tracking-wider text-stone-500">Detail Kegiatan</p>
       <div className="grid gap-2 text-xs sm:grid-cols-2">
         <p><span className="font-semibold text-stone-600">Jenis:</span> {activity.type}</p>
-        <p><Calendar className="mr-1 inline h-3 w-3 text-stone-400" /><span className="font-semibold text-stone-600">Periode:</span> {activity.dateStart ? new Date(activity.dateStart).toLocaleDateString("id-ID") : "-"} — {activity.dateEnd ? new Date(activity.dateEnd).toLocaleDateString("id-ID") : "-"}</p>
+        <p><Calendar className="mr-1 inline h-3 w-3 text-stone-400" /><span className="font-semibold text-stone-600">Periode:</span> {formatDateRange(activity.dateStart, activity.dateEnd)}</p>
         <p><MapPin className="mr-1 inline h-3 w-3 text-stone-400" /><span className="font-semibold text-stone-600">Lokasi:</span> {activity.location || "-"}</p>
         <p><span className="font-semibold text-stone-600">Unit:</span> {activity.unit || "-"}</p>
         <p><span className="font-semibold text-stone-600">Jumlah peserta:</span> {activity.participants ?? "-"}</p>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, ShieldCheck, LogOut, Search, FileDown, Eye, Download, Link2, Calendar, Users, BookOpen, RefreshCw, CheckCircle2, AlertCircle, X, FileText } from "lucide-react";
 import IaDirectForm from "@/components/ia-direct-form";
 import IaPublishingPanel from "@/components/ia-publishing-panel";
+import { formatDateRange } from "@/lib/utils";
 
 interface HistoryItem {
   id: string;
@@ -236,7 +237,7 @@ export default function IaManagementPage() {
                       {item.source === "IA_DIRECT" && <span className="rounded bg-purple-100 px-2 py-0.5 text-[10px] font-bold text-purple-700">IA Langsung</span>}
                     </div>
                     <p className="mt-1.5 text-sm font-semibold text-stone-800">{item.title}</p>
-                    <p className="mt-0.5 text-xs text-stone-500">{item.partnerName} · {item.dateStart ? new Date(item.dateStart).toLocaleDateString("id-ID") : "-"} — {item.dateEnd ? new Date(item.dateEnd).toLocaleDateString("id-ID") : "-"}</p>
+                    <p className="mt-0.5 text-xs text-stone-500">{item.partnerName} · {formatDateRange(item.dateStart, item.dateEnd)}</p>
                     <p className="mt-1 text-xs text-stone-500">Pengaju: <span className="font-semibold text-stone-700">{item.submittedBy || "Tim Kerja Sama"}</span>{item.submitterNim && ` · NIM ${item.submitterNim}`}{item.submitterUnit && ` · ${item.submitterUnit}`}</p>
                     <div className="mt-2 flex flex-wrap gap-2 text-xs text-stone-400">
                       <span className="inline-flex items-center gap-1"><Users className="h-3 w-3" /> {item.studentCount} mahasiswa</span>

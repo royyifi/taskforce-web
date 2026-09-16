@@ -101,6 +101,15 @@ export function formatDate(date: Date | null): string {
   return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
 }
 
+export function formatDateRange(start: Date | string | null, end: Date | string | null, separator = " — "): string {
+  if (!start) return "-";
+  const startDate = start instanceof Date ? start : new Date(start);
+  if (!end) return formatDate(startDate);
+  const endDate = end instanceof Date ? end : new Date(end);
+  if (startDate.getTime() === endDate.getTime()) return formatDate(startDate);
+  return `${formatDate(startDate)}${separator}${formatDate(endDate)}`;
+}
+
 /**
  * Format short date
  */

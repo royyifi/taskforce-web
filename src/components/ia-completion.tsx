@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { AlertCircle, CheckCircle2, ExternalLink, Eye, Image as ImageIcon, FileText, Clock, MapPin } from "lucide-react";
 import type { IaItem } from "@/components/ia-admin";
+import { formatDateRange } from "@/lib/utils";
 
 export default function IaCompletion({ completion, busy, setBusy, flash, reload }: { completion: IaItem[]; busy: boolean; setBusy: (v: boolean) => void; flash: (text: string, type?: "info" | "error") => void; reload: () => Promise<void> }) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -62,7 +63,7 @@ export default function IaCompletion({ completion, busy, setBusy, flash, reload 
             {isExpanded && <div className="mt-4 space-y-4">
               {/* Basic info */}
               <div className="grid gap-3 text-sm sm:grid-cols-2">
-                {item.dateStart && <div className="flex items-start gap-2"><Clock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-stone-400" /><div><p className="text-xs text-stone-400">Periode</p><p className="font-semibold text-stone-800">{new Date(item.dateStart).toLocaleDateString("id-ID")}{item.dateEnd ? ` — ${new Date(item.dateEnd).toLocaleDateString("id-ID")}` : ""}</p></div></div>}
+                {item.dateStart && <div className="flex items-start gap-2"><Clock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-stone-400" /><div><p className="text-xs text-stone-400">Periode</p><p className="font-semibold text-stone-800">{formatDateRange(item.dateStart, item.dateEnd)}</p></div></div>}
                 {item.submittedBy && <div><p className="text-xs text-stone-400">Dilaporkan oleh</p><p className="font-semibold text-stone-800">{item.submittedBy}{item.submitterUnit ? ` · ${item.submitterUnit}` : ""}</p></div>}
                 {item.reportDate && <div><p className="text-xs text-stone-400">Tanggal laporan</p><p className="font-semibold text-stone-800">{new Date(item.reportDate).toLocaleDateString("id-ID")}</p></div>}
                 {item.students.length > 0 && <div><p className="text-xs text-stone-400">Mahasiswa ({item.students.length})</p><p className="font-semibold text-stone-800">{item.students.join(", ")}</p></div>}

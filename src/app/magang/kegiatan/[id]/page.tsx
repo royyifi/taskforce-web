@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import IaConfirm from "@/components/ia-confirm";
 import ActivityAdminActions from "@/components/activity-admin-actions";
+import { formatDateRange } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +42,10 @@ function dateText(date: Date | null) {
   return date ? new Intl.DateTimeFormat("id-ID", { dateStyle: "long" }).format(date) : "-";
 }
 
+function periodText(start: Date | null, end: Date | null) {
+  return formatDateRange(start, end);
+}
+
 export default async function ActivityStatusPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const activity = await db.activity.findUnique({ where: { id }, select: { id: true, title: true, status: true, iaStatus: true, iaNumber: true, iaUrl: true, iaConfirmedAt: true, iaReviewNote: true, iaLanguage: true, dateStart: true, dateEnd: true, location: true, activityCode: true, reportDate: true, reportSummary: true, reportLink: true, rkpUrl: true, completedAt: true, reviewNote: true, source: true, partner: { select: { name: true, slug: true, city: true, address: true, picName: true, picPosition: true } }, students: { orderBy: { order: "asc" as const } } } });
@@ -55,7 +60,7 @@ export default async function ActivityStatusPage({ params }: { params: Promise<{
     <div className="mt-7 rounded-2xl border border-stone-100 bg-white p-5 shadow-sm sm:p-8">
       <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700">Status kegiatan</p>
       <div className="mt-2 flex flex-wrap items-start justify-between gap-3"><div><h1 className="text-2xl font-bold text-stone-900">{activity.title}</h1><p className="mt-1 text-sm text-stone-500">Nomor Kegiatan: <strong className="text-emerald-700">{activity.activityCode || "Menunggu nomor"}</strong></p></div><div className="flex flex-col items-end gap-2"><span className={`rounded-full px-3 py-1 text-xs font-semibold ${current < 0 ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700"}`}>{current < 0 ? "Ditolak" : currentLabel}</span>{isAdmin && <ActivityAdminActions activityId={activity.id} activityName={activity.activityCode || activity.title} />}</div></div>
-      <div className="mt-5 grid gap-3 border-t border-stone-100 pt-5 text-sm sm:grid-cols-2"><div><p className="text-xs text-stone-400">Mitra</p><Link href={`/mitra/${activity.partner.slug}`} className="font-semibold text-stone-800 hover:text-emerald-700">{activity.partner.name}</Link></div><div><p className="text-xs text-stone-400">Periode</p><p className="font-semibold text-stone-800">{dateText(activity.dateStart)} — {dateText(activity.dateEnd)}</p></div></div>
+      <div className="mt-5 grid gap-3 border-t border-stone-100 pt-5 text-sm sm:grid-cols-2"><div><p className="text-xs text-stone-400">Mitra</p><Link href={`/mitra/${activity.partner.slug}`} className="font-semibold text-stone-800 hover:text-emerald-700">{activity.partner.name}</Link></div><div><p className="text-xs text-stone-400">Periode</p><p className="font-semibold text-stone-800">{periodText(activity.dateStart, activity.dateEnd)}</p></div></div>
     </div>
 
     {current < 0 ? <div className="mt-5 rounded-2xl border border-red-100 bg-red-50 p-5 text-sm text-red-800"><strong>Pengajuan ditolak.</strong>{activity.reviewNote && <p className="mt-1">Catatan tim: {activity.reviewNote}</p>}</div> : <>

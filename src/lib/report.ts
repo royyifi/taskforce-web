@@ -238,7 +238,7 @@ export async function generateLaporanWord(p: ReportParams): Promise<Buffer> {
               /* DATA ROWS */
               ...items.map((item, idx) => {
                 const tgl = item.dateStart && item.dateEnd
-                  ? `${fd(item.dateStart)} — ${fd(item.dateEnd)}`
+                  ? (item.dateStart.getTime() === item.dateEnd.getTime() ? fd(item.dateStart) : `${fd(item.dateStart)} — ${fd(item.dateEnd)}`)
                   : item.dateStart ? fd(item.dateStart) : "-";
                 return new TableRow({ children: [
                   c(String(idx + 1), COL_NO, { align: AlignmentType.CENTER }),
